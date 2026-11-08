@@ -1,6 +1,6 @@
 /**
  * ໂໝດຝຶກແປ້ນພິມ ແລະ ຕຳແໜ່ງນິ້ວມື (Keyboard Layout & Finger Trainer)
- * ແນະນຳຕຳແໜ່ງປຸ່ມກົດ ແລະ ນິ້ວມືທີ່ຖືກຕ້ອງຕາມຫຼັກການ Touch Typing
+ * ປັບປຸງການສະແດງຜົນພາສາລາວເຕັມຄຳ ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
  */
 
 class KeyboardTrainer {
@@ -123,27 +123,26 @@ class KeyboardTrainer {
       }
     }
 
-    // ອັບເດດຂໍ້ຄວາມແນະນຳເທິງ UI
+    // ອັບເດດຂໍ້ຄວາມແນະນຳເທິງ UI ໂດຍໃຊ້ສອງ layer (ຄຳສັບເຕັມ 100% ບໍ່ຕັດແຍກສະຫຼະ)
     const targetDisplay = document.getElementById('trainer-target-word');
     const fingerDisplay = document.getElementById('trainer-finger-hint');
     const shiftBadge = document.getElementById('trainer-shift-badge');
 
     if (targetDisplay) {
-      let html = '';
-      for (let i = 0; i < target.word.length; i++) {
-        if (i < this.charIdx) {
-          html += `<span class="char correct">${target.word[i]}</span>`;
-        } else if (i === this.charIdx) {
-          html += `<span class="char active-target">${target.word[i]}</span>`;
-        } else {
-          html += `<span class="char pending">${target.word[i]}</span>`;
-        }
-      }
-      targetDisplay.innerHTML = html;
+      const word = target.word;
+      const progressRatio = Math.min(1, this.charIdx / word.length);
+      const percent = Math.round(progressRatio * 100);
+
+      targetDisplay.innerHTML = `
+        <div class="trainer-word-display">
+          <span class="trainer-word-base">${word}</span>
+          <span class="trainer-word-overlay" style="clip-path: inset(0 ${100 - percent}% 0 0);">${word}</span>
+        </div>
+      `;
     }
 
     if (fingerDisplay) {
-      fingerDisplay.textContent = fingerName ? `👉 ${fingerName}` : '';
+      fingerDisplay.textContent = fingerName ? `👉 ${fingerName} (ກົດ: ${target.char})` : `ກົດ: ${target.char}`;
     }
 
     if (shiftBadge) {

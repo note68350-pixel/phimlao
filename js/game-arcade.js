@@ -1,6 +1,6 @@
 /**
  * ໂໝດເກມຝົນຄຳສັບ (Falling Words Arcade - ZType Style)
- * ຄຳສັບພາສາລາວຕົກລົງມາ, ຜູ້ຫຼິ້ນຕ້ອງພິມທຳລາຍກ່ອນຕົກເຖິງພື້ນ
+ * ປັບປຸງ Canvas Clipping Mask ເພື່ອແຕ້ມພາສາລາວເຕັມຄຳ 100% ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
  */
 
 class ArcadeGame {
@@ -325,7 +325,7 @@ class ArcadeGame {
         this.ctx.strokeStyle = '#38bdf8';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
-        this.ctx.roundRect(w.x - 10, w.y - fontSize + 2, w.width + 20, fontSize + 12, 8);
+        this.ctx.roundRect(w.x - 10, w.y - fontSize + 2, w.width + 20, fontSize + 16, 8);
         this.ctx.fill();
         this.ctx.stroke();
 
@@ -338,22 +338,31 @@ class ArcadeGame {
         this.ctx.stroke();
       }
 
-      // ແຕ້ມຂໍ້ຄວາມຄຳສັບ (ແຍກສ່ວນທີ່ພິມແລ້ວ ກັບ ຍັງບໍ່ໄດ້ພິມ)
+      // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳ 100% ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
       if (isTargeted && this.typedLength > 0) {
-        const typedPart = w.text.substring(0, this.typedLength);
-        const remainingPart = w.text.substring(this.typedLength);
+        // 1. ແຕ້ມຂໍ້ຄວາມເຕັມຄຳດ້ວຍສີເທົາ/ຟ້າ (ຊັ້ນພື້ນຫຼັງ)
+        this.ctx.fillStyle = '#64748b';
+        this.ctx.fillText(w.text, w.x, w.y);
 
-        // ສ່ວນທີ່ພິມຖືກແລ້ວ (ສີຂຽວ)
-        this.ctx.fillStyle = '#4ade80';
-        this.ctx.fillText(typedPart, w.x, w.y);
+        // 2. ໃຊ້ Canvas Clipping Mask ເພື່ອແຕ້ມສີຂຽວສະເພາະສ່ວນທີ່ພິມຖືກ (ໂດຍບໍ່ຕັດແຍກສະຫຼະ)
+        const progressRatio = Math.min(1, this.typedLength / w.text.length);
+        const highlightWidth = (w.width + 8) * progressRatio;
 
-        const typedWidth = this.ctx.measureText(typedPart).width;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.rect(w.x - 4, w.y - fontSize - 6, highlightWidth, fontSize + 20);
+        this.ctx.clip();
 
-        // ສ່ວນທີ່ເຫຼືອ (ສີຂາວ)
-        this.ctx.fillStyle = '#f8fafc';
-        this.ctx.fillText(remainingPart, w.x + typedWidth, w.y);
+        // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳຄືນໃໝ່ດ້ວຍສີຂຽວ
+        this.ctx.fillStyle = '#34d399';
+        this.ctx.fillText(w.text, w.x, w.y);
+        this.ctx.restore();
+
+        // 3. ແຕ້ມແຖບເສັ້ນຄວາມຄືບໜ້າການພິມຢູ່ກ້ອງຄຳສັບ
+        this.ctx.fillStyle = '#34d399';
+        this.ctx.fillRect(w.x, w.y + 6, w.width * progressRatio, 3);
       } else {
-        this.ctx.fillStyle = isTargeted ? '#38bdf8' : '#e2e8f0';
+        this.ctx.fillStyle = isTargeted ? '#38bdf8' : '#f8fafc';
         this.ctx.fillText(w.text, w.x, w.y);
       }
     }

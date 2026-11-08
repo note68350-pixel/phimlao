@@ -1,6 +1,6 @@
 /**
  * ໂໝດທົດສອບຄວາມໄວການພິມ (Speed Test Mode - Monkeytype Style)
- * ວັດ WPM, CPM, Accuracy, ແລະ ສະຖິຕິການພິມແບບລະອຽດ
+ * ປັບປຸງລະບົບສະແດງຜົນພາສາລາວແບບເຕັມຄຳ (Full Word Overlay) ບໍ່ຕັດແຍກສະຫຼະ-ວັນນະຍຸດ
  */
 
 class SpeedTestGame {
@@ -17,7 +17,6 @@ class SpeedTestGame {
 
     this.wordsList = [];
     this.currentWordIdx = 0;
-    this.currentCharIdx = 0;
     this.currentInput = '';
     this.history = []; // ບັນທຶກສະຖານະແຕ່ລະຄຳ
 
@@ -58,7 +57,6 @@ class SpeedTestGame {
     this.isFinished = false;
     this.startTime = null;
     this.currentWordIdx = 0;
-    this.currentCharIdx = 0;
     this.currentInput = '';
     this.history = [];
     this.totalTypedChars = 0;
@@ -142,19 +140,25 @@ class SpeedTestGame {
       if (this.currentInput.length === 0) return; // ບໍ່ໃຫ້ກົດ space ຊ້ຳໆ
 
       // ກວດສອບຄວາມຖືກຕ້ອງຂອງຄຳສັບ
-      const isWordCorrect = this.currentInput === currentWord;
+      const isWordCorrect = (this.currentInput === currentWord);
       this.history.push({
         expected: currentWord,
         typed: this.currentInput,
         correct: isWordCorrect
       });
 
-      if (isWordCorrect) {
-        this.correctChars += currentWord.length + 1; // +1 space
-        sounds.playWordComplete();
-      } else {
-        this.errorChars += Math.abs(currentWord.length - this.currentInput.length) + 1;
-        sounds.playError();
+      const currentWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
+      if (currentWordEl) {
+        currentWordEl.classList.remove('current', 'has-error');
+        if (isWordCorrect) {
+          currentWordEl.classList.add('word-correct');
+          this.correctChars += currentWord.length + 1; // +1 space
+          sounds.playWordComplete();
+        } else {
+          currentWordEl.classList.add('word-incorrect');
+          this.errorChars += Math.abs(currentWord.length - this.currentInput.length) + 1;
+          sounds.playError();
+        }
       }
 
       this.currentWordIdx++;
@@ -172,9 +176,16 @@ class SpeedTestGame {
         for (const item of extra) {
           this.wordsList.push(item.word);
         }
+        this.appendExtraWords(extra.map(e => e.word));
       }
 
-      this.render();
+      // ໄຮໄລ້ຄຳຖັດໄປ
+      const nextWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
+      if (nextWordEl) {
+        nextWordEl.classList.add('current');
+      }
+
+      this.renderWord(this.currentWordIdx);
       this.scrollToCurrentWord();
       if (this.options.onUpdate) {
         this.options.onUpdate(this.getStats());
@@ -235,21 +246,10 @@ class SpeedTestGame {
     wordsWrapper.id = 'speed-words-stream';
 
     this.wordsList.forEach((word, idx) => {
-      const wordSpan = document.createElement('span');
-      wordSpan.className = 'speed-word';
-      wordSpan.id = `speed-word-${idx}`;
+      const wordSpan = this.createWordElement(word, idx);
       if (idx === this.currentWordIdx) {
         wordSpan.classList.add('current');
       }
-
-      // ແຍກຕົວອັກສອນ
-      for (let i = 0; i < word.length; i++) {
-        const charSpan = document.createElement('span');
-        charSpan.className = 'char';
-        charSpan.textContent = word[i];
-        wordSpan.appendChild(charSpan);
-      }
-
       wordsWrapper.appendChild(wordSpan);
     });
 
@@ -257,39 +257,71 @@ class SpeedTestGame {
     this.renderWord(this.currentWordIdx);
   }
 
+  createWordElement(word, idx) {
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'speed-word';
+    wordSpan.id = `speed-word-${idx}`;
+
+    // ຊັ້ນທີ 1 (Base): ສະແດງຄຳສັບເຕັມ 100% ດ້ວຍສີມາດຕະຖານ (ບໍ່ແຍກ span ດ່ຽວ ເພື່ອບໍ່ໃຫ້ສະຫຼະຫຼຸດ)
+    const baseSpan = document.createElement('span');
+    baseSpan.className = 'word-base';
+    baseSpan.textContent = word;
+    wordSpan.appendChild(baseSpan);
+
+    // ຊັ້ນທີ 2 (Overlay): ສະແດງສີໄຮໄລ້ຂຽວ/ຟ້າ ໂດຍໃຊ້ clip-path (ສະຫຼະ ແລະ ວັນນະຍຸດຢູ່ຕຳແໜ່ງເດີມສະເໝີ)
+    const overlaySpan = document.createElement('span');
+    overlaySpan.className = 'word-overlay';
+    overlaySpan.textContent = word;
+    wordSpan.appendChild(overlaySpan);
+
+    return wordSpan;
+  }
+
+  appendExtraWords(extraWords) {
+    const stream = document.getElementById('speed-words-stream');
+    if (!stream) return;
+    const startIndex = this.wordsList.length - extraWords.length;
+    extraWords.forEach((word, idx) => {
+      const el = this.createWordElement(word, startIndex + idx);
+      stream.appendChild(el);
+    });
+  }
+
   renderWord(wordIdx) {
     const wordEl = document.getElementById(`speed-word-${wordIdx}`);
     if (!wordEl) return;
 
     const targetWord = this.wordsList[wordIdx] || '';
-    const charElements = wordEl.querySelectorAll('.char');
     const input = this.currentInput;
+    const overlayEl = wordEl.querySelector('.word-overlay');
 
-    // ລຶບຕົວອັກສອນເກີນກ່ອນ
-    wordEl.querySelectorAll('.char.extra').forEach(el => el.remove());
+    wordEl.classList.remove('has-error');
 
-    for (let i = 0; i < charElements.length; i++) {
-      const charEl = charElements[i];
-      charEl.className = 'char';
-
-      if (i < input.length) {
-        if (input[i] === targetWord[i]) {
-          charEl.classList.add('correct');
-        } else {
-          charEl.classList.add('incorrect');
-        }
-      } else if (i === input.length) {
-        charEl.classList.add('active-caret');
+    if (input.length === 0) {
+      if (overlayEl) {
+        overlayEl.style.clipPath = 'inset(0 100% 0 0)';
+        overlayEl.className = 'word-overlay';
       }
+      return;
     }
 
-    // ຖ້າພິມເກີນຄວາມຍາວຂອງຄຳສັບ
-    if (input.length > targetWord.length) {
-      for (let j = targetWord.length; j < input.length; j++) {
-        const extraChar = document.createElement('span');
-        extraChar.className = 'char extra incorrect';
-        extraChar.textContent = input[j];
-        wordEl.appendChild(extraChar);
+    // ກວດສອບຄວາມຖືກຕ້ອງຂອງຄຳທີ່ກຳລັງພິມ
+    const isPrefixMatch = targetWord.startsWith(input);
+
+    if (isPrefixMatch) {
+      // ພິມຖືກຕ້ອງ -> ຄຳນວນເປີເຊັນແລ້ວ clip ສະເພາະສ່ວນທີ່ພິມແລ້ວ
+      const ratio = Math.min(1, input.length / targetWord.length);
+      const percent = Math.round(ratio * 100);
+      if (overlayEl) {
+        overlayEl.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+        overlayEl.className = 'word-overlay match';
+      }
+    } else {
+      // ພິມຜິດ -> ໄຮໄລ້ສີແດງເຕືອນ
+      wordEl.classList.add('has-error');
+      if (overlayEl) {
+        overlayEl.style.clipPath = 'inset(0 0 0 0)';
+        overlayEl.className = 'word-overlay error';
       }
     }
   }

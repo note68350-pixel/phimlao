@@ -1,0 +1,818 @@
+/* ========================================================
+   ເວັບເກມ "ພີມລາວ" (PhimLao) - Modern Responsive CSS
+   ======================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Noto+Sans+Lao:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #0b0f19;
+  --bg-secondary: #131b2e;
+  --bg-card: #1e293b;
+  --bg-key: #1e293b;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-sub: #64748b;
+  --accent: #38bdf8;
+  --accent-glow: rgba(56, 189, 248, 0.25);
+  --success: #34d399;
+  --error: #f43f5e;
+  --warning: #fbbf24;
+
+  /* Finger Guide Colors */
+  --c-pinky: #c084fc;
+  --c-ring: #60a5fa;
+  --c-mid: #22d3ee;
+  --c-index: #34d399;
+  --c-thumb: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans Lao', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+}
+
+/* Header */
+header {
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(11, 15, 25, 0.8);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+.brand-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.brand-badge {
+  font-size: 0.75rem;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.btn-pill:hover {
+  border-color: var(--accent);
+  color: #fff;
+  background: #243248;
+}
+
+.btn-pill.active {
+  background: var(--accent);
+  color: #0b0f19;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* Control Bar (Modes & Difficulty) */
+.control-bar {
+  margin: 1.25rem 0 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: var(--bg-secondary);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.tab-group {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--bg-primary);
+  padding: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: var(--bg-card);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.difficulty-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.diff-label {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-right: 0.25rem;
+}
+
+.diff-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diff-btn.active[data-diff="easy"] {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.diff-btn.active[data-diff="medium"] {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.diff-btn.active[data-diff="hard"] {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(244, 63, 94, 0.12);
+}
+
+/* Stats Display Bar */
+.stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-item .val {
+  font-family: 'Fira Code', monospace;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.stat-item .lbl {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-top: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sub-settings (for Speed test: 15s, 30s, 60s, words) */
+.sub-settings {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sub-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+}
+
+.sub-btn:hover {
+  color: var(--text-muted);
+}
+
+.sub-btn.active {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Game Main Viewport */
+.game-viewport {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  min-height: 280px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Speed Test Mode Elements */
+.speed-words-wrapper {
+  font-size: 1.95rem;
+  line-height: 2.4;
+  height: 140px;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  cursor: text;
+  padding: 0.25rem;
+}
+
+.speed-word {
+  display: inline-flex;
+  padding: 0.1rem 0.25rem;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.speed-word.current {
+  background: rgba(56, 189, 248, 0.08);
+  border-bottom: 2px solid var(--accent);
+}
+
+.speed-word .char {
+  color: var(--text-sub);
+  transition: color 0.1s ease;
+  position: relative;
+}
+
+.speed-word .char.correct {
+  color: var(--text-main);
+}
+
+.speed-word .char.incorrect {
+  color: var(--error);
+  text-decoration: underline;
+}
+
+.speed-word .char.extra {
+  color: #fb7185;
+  opacity: 0.8;
+}
+
+.speed-word .char.active-caret::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  height: 90%;
+  background: var(--accent);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Falling Words Arcade Mode */
+.arcade-container {
+  width: 100%;
+  position: relative;
+}
+
+#arcade-canvas {
+  width: 100%;
+  height: 380px;
+  background: radial-gradient(circle at 50% 100%, #172554 0%, #0b0f19 80%);
+  border-radius: 12px;
+  display: block;
+}
+
+/* Trainer Mode */
+.trainer-container {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.trainer-guide-box {
+  margin-bottom: 1.25rem;
+}
+
+.trainer-target-word {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.trainer-target-word .char.correct {
+  color: var(--success);
+}
+
+.trainer-target-word .char.active-target {
+  color: var(--accent);
+  text-decoration: underline;
+  animation: pulseTarget 1.2s infinite;
+}
+
+.trainer-target-word .char.pending {
+  color: var(--text-sub);
+}
+
+@keyframes pulseTarget {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.trainer-meta-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.trainer-finger-hint {
+  font-size: 1.15rem;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.trainer-shift-badge {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(192, 132, 252, 0.2);
+  color: var(--c-pinky);
+  border: 1px solid var(--c-pinky);
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Restart Bar */
+.viewport-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-restart {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-restart:hover {
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* ========================================================
+   Virtual Lao Keyboard (ຜັງແປ້ນພິມສະເໝືອນ)
+   ======================================================== */
+.keyboard-section {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.keyboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #0f172a;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+  max-width: 1000px;
+  width: 100%;
+}
+
+.kb-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.key {
+  position: relative;
+  height: 52px;
+  min-width: 44px;
+  flex: 1;
+  background: var(--bg-key);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  outline: none;
+}
+
+.key:hover {
+  background: #334155;
+}
+
+.key-shift {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  align-self: flex-start;
+  line-height: 1;
+}
+
+.key-normal {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  align-self: center;
+  line-height: 1;
+}
+
+.key-qwerty {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  color: var(--text-sub);
+  align-self: flex-end;
+  line-height: 1;
+}
+
+.key-special {
+  align-self: center;
+  margin: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Special Widths */
+.w-backspace { flex: 1.75; }
+.w-tab { flex: 1.4; }
+.w-caps { flex: 1.6; }
+.w-enter { flex: 1.85; }
+.w-shift { flex: 2.2; }
+.w-space { flex: 7; max-width: 420px; }
+
+/* Finger Color Bars (Bottom Indicator) */
+.key.finger-l-pinky, .key.finger-r-pinky { border-bottom: 3px solid var(--c-pinky); }
+.key.finger-l-ring,  .key.finger-r-ring  { border-bottom: 3px solid var(--c-ring); }
+.key.finger-l-mid,   .key.finger-r-mid   { border-bottom: 3px solid var(--c-mid); }
+.key.finger-l-index, .key.finger-r-index { border-bottom: 3px solid var(--c-index); }
+.key.finger-thumb                        { border-bottom: 3px solid var(--c-thumb); }
+
+/* Key Press & Highlight Animations */
+.key.key-active {
+  transform: translateY(2px);
+  background: #475569 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.key.highlight-target {
+  background: rgba(56, 189, 248, 0.25) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 12px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+.key.highlight-target .key-normal {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.key.highlight-shift {
+  background: rgba(192, 132, 252, 0.3) !important;
+  border-color: var(--c-pinky) !important;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.4);
+}
+
+.key.key-shake {
+  animation: keyShake 0.35s ease-in-out;
+  border-color: var(--error) !important;
+  background: rgba(244, 63, 94, 0.25) !important;
+}
+
+@keyframes keyShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Finger Legend */
+.finger-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.c-pinky { background: var(--c-pinky); }
+.c-ring  { background: var(--c-ring); }
+.c-mid   { background: var(--c-mid); }
+.c-index { background: var(--c-index); }
+.c-thumb { background: var(--c-thumb); }
+
+/* Hidden mobile sink */
+#mobile-input-sink {
+  position: absolute;
+  opacity: 0;
+  left: -9999px;
+  top: -9999px;
+}
+
+/* Result Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+.result-rank {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1.25rem;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.res-card {
+  background: var(--bg-card);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.res-card .val {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.res-card .lbl {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin-top: 0.25rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+}
+
+footer p {
+  margin-bottom: 0.35rem;
+}
+
+/* ========================================================
+   Responsive Breakpoints
+   ======================================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .brand-title {
+    font-size: 1.2rem;
+  }
+
+  .stats-bar {
+    gap: 1.25rem;
+  }
+
+  .stat-item .val {
+    font-size: 1.7rem;
+  }
+
+  .speed-words-wrapper {
+    font-size: 1.5rem;
+    height: 120px;
+  }
+
+  .trainer-target-word {
+    font-size: 2.2rem;
+  }
+
+  .keyboard-container {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+
+  .kb-row {
+    gap: 3px;
+  }
+
+  .key {
+    height: 44px;
+    min-width: 24px;
+    padding: 2px 3px;
+    border-radius: 5px;
+  }
+
+  .key-normal {
+    font-size: 0.95rem;
+  }
+
+  .key-shift {
+    font-size: 0.6rem;
+  }
+
+  .key-qwerty {
+    display: none; /* ເຊື່ອງຕົວອັກສອນອັງກິດເທິງຈໍນ້ອຍເພື່ອໃຫ້ອ່ານງ່າຍ */
+  }
+
+  .finger-legend {
+    display: none;
+  }
+}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ພີມລາວ - ເກມຝຶກພິມສັບພາສາລາວ (PhimLao Typing Game)</title>
+  <meta name="description" content="ເວັບເກມຝຶກພິມພາສາລາວແທ້ 100% ພ້ອມໂໝດງ່າຍ, ກາງ, ຍາກ ຮອງຮັບທັງຄອມພິວເຕີ ແລະ ມືຖື">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇱🇦</text></svg>">
+</head>
+<body>
+
+  <!-- Hidden sink for mobile typing integration -->
+  <input type="text" id="mobile-input-sink" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true">
+
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <div class="brand">
+        <div class="brand-logo">⌨️</div>
+        <div>
+          <div style="display: flex; align-items: center;">
+            <h1 class="brand-title">ພີມລາວ</h1>
+            <span class="brand-badge">ພາສາລາວແທ້ 100%</span>
+          </div>
+          <div id="top-wpm-badge" style="font-size: 0.75rem; color: var(--text-sub); margin-top: 2px;">
+            🏆 WPM ສູງສຸດ: 0
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn-pill" id="auto-translate-toggle" title="ແປງປຸ່ມ QWERTY ເປັນຕົວອັກສອນລາວອັດຕະໂນມັດ ສຳລັບຄອມທີ່ບໍ່ມີຄີບອດລາວ">
+          ⌨️ ແປ້ນພິມ: ຕາມລະບົບ
+        </button>
+        <button type="button" class="btn-pill" id="sound-toggle">
+          🔊 ສຽງ: ເປີດ
+        </button>
+        <button type="button" class="btn-pill active" id="kb-visibility-toggle">
+          👁️ ແປ້ນພິມສະເໝືອນ
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <!-- Control Bar (Modes & Difficulty) -->
+    <div class="control-bar">
+      <!-- Game Modes -->
+      <div class="tab-group">
+        <button type="button" class="tab-btn active" data-mode="speed">⚡ ທົດສອບຄວາມໄວ</button>
+        <button type="button" class="tab-btn" data-mode="arcade">👾 ເກມຝົນຄຳສັບ</button>
+        <button type="button" class="tab-btn" data-mode="trainer">⌨️ ຝຶກແປ້ນພິມ & ນິ້ວມື</button>
+      </div>
+
+      <!-- Difficulty Selector -->
+      <div class="difficulty-group">
+        <span class="diff-label">ລະດັບ:</span>
+        <button type="button" class="diff-btn active" data-diff="easy">ງ່າຍ</button>
+        <button type="button" class="diff-btn" data-diff="medium">ກາງ</button>
+        <button type="button" class="diff-btn" data-diff="hard">ຍາກ</button>
+      </div>
+    </div>
+
+    <!-- Stats Display (Speed Mode) -->
+    <div id="stats-speed-bar" class="stats-bar">
+      <div class="stat-item">
+        <span class="val" id="stat-wpm">0</span>
+        <span class="lbl">WPM (ຄຳ/ນາທີ)</span>
+      </div>
+      <div class="stat-item">
+        <span class="val" id="stat-accuracy">100%</span>
+        <span class="lbl">ຄວາມຖືກຕ້ອງ</span>
+      </div>
+      <div class="stat-item">
+        <span class="val" id="stat-timer">30s</span>
+        <span class="lbl">ເວລາທີ່ເຫຼືອ</span>
+      </div>
+    </div>
+
+    <!-- Stats Display (Arcade Mode) -->
+    <div id="stats-arcade-bar" class="stats-bar" style="display: none;">
+      <div class="stat-item">
+        <span class="val" id="stat-score">0</span>
+        <span class="lbl">ຄະແນນ</span>
+      </div>
+      <div class="stat-item">
+        <span class="val" id="stat-lives">❤️❤️❤️❤️❤️</span>
+        <span class="lbl">ພະລັງຊີວິດ</span>
+      </div>
+      <div class="stat-item">
+        <span class="val" id="stat-combo">0x</span>
+        <span class="lbl">ຄອມໂບ</span>
+      </div>
+    </div>
+
+    <!-- Stats Display (Trainer Mode) -->
+    <div id="stats-trainer-bar" class="stats-bar" style="display: none;">
+      <div class="stat-item">
+        <span class="val" id="stat-trainer-progress">1 / 20</span>
+        <span class="lbl">ຄວາມຄືບໜ້າ</span>
+      </div>
+      <div class="stat-item">
+        <span class="val" id="stat-trainer-acc">100%</span>
+        <span class="lbl">ຄວາມຖືກຕ້ອງ</span>
+      </div>
+    </div>
+
+    <!-- Sub Settings for Speed Mode -->
+    <div id="speed-sub-settings" class="sub-settings">
+      <button type="button" class="sub-btn" data-speed-setting="time:15">15 ວິນາທີ</button>
+      <button type="button" class="sub-btn active" data-speed-setting="time:30">30 ວິນາທີ</button>
+      <button type="button" class="sub-btn" data-speed-setting="time:60">60 ວິນາທີ</button>
+      <button type="button" class="sub-btn" data-speed-setting="words:10">10 ຄຳສັບ</button>
+      <button type="button" class="sub-btn" data-speed-setting="words:25">25 ຄຳສັບ</button>
+    </div>
+
+    <!-- Main Game Viewport -->
+    <div class="game-viewport" id="game-main-area">
+      
+      <!-- Panel 1: Speed Test -->
+      <div id="panel-speed">
+        <div id="speed-words-container"></div>
+      </div>
+
+      <!-- Panel 2: Arcade Falling Words -->
+      <div id="panel-arcade" class="arcade-container" style="display: none;">
+        <canvas id="arcade-canvas"></canvas>
+      </div>
+
+      <!-- Panel 3: Keyboard Trainer -->
+      <div id="panel-trainer" class="trainer-container" style="display: none;">
+        <div class="trainer-guide-box">
+          <div class="trainer-target-word" id="trainer-target-word"></div>
+          <div class="trainer-meta-info">
+            <span class="trainer-finger-hint" id="trainer-finger-hint"></span>
+            <span class="trainer-shift-badge" id="trainer-shift-badge">
+              ⬆️ ກົດ Shift ຄ້າງໄວ້
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Restart Button Bar -->
+      <div class="viewport-footer">
+        <button type="button" class="btn-restart btn-restart-game" title="ກົດ Tab ຫຼື ກົດປຸ່ມນີ້ເພື່ອເລີ່ມໃໝ່">
+          🔄 ເລີ່ມໃໝ່ (Tab)
+        </button>
+      </div>
+    </div>
+
+    <!-- Virtual Keyboard Section -->
+    <section class="keyboard-section">
+      <div class="keyboard-container" id="virtual-keyboard">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Finger Colors Legend -->
+      <div class="finger-legend">
+        <div class="legend-item"><span class="legend-color c-pinky"></span> ນິ້ວກ້ອຍ</div>
+        <div class="legend-item"><span class="legend-color c-ring"></span> ນິ້ວນາງ</div>
+        <div class="legend-item"><span class="legend-color c-mid"></span> ນິ້ວກາງ</div>
+        <div class="legend-item"><span class="legend-color c-index"></span> ນິ້ວຊີ້</div>
+        <div class="legend-item"><span class="legend-color c-thumb"></span> ນິ້ວໂປ້ (ຍະຫວ່າງ)</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Result Modal -->
+  <div id="result-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h2 id="result-title" class="result-title">🎉 ສຳເລັດການທົດສອບ!</h2>
+      <div id="result-details"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" id="btn-play-again">ຫຼິ້ນອີກຄັ້ງ 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>🇱🇦 <strong>ພີມລາວ (PhimLao)</strong> - ເວັບເກມຝຶກພິມສັບພາສາລາວແທ້ 100% ບໍ່ມີສັບໄທປະສົມ</p>
+      <p style="color: var(--text-sub); font-size: 0.75rem;">
+        ຮອງຮັບລະບົບ Saysettha Lao Keyboard Standard • ຫຼິ້ນໄດ້ຟຣີທັງເທິງ Computer, iPad, Tablet ແລະ ໂທລະສັບມືຖື
+      </p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/words.js"></script>
+  <script src="js/keyboard-layout.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game-speed.js"></script>
+  <script src="js/game-arcade.js"></script>
+  <script src="js/game-trainer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

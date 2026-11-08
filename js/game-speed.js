@@ -162,6 +162,7 @@ class SpeedTestGame {
         this.correctChars += normalizedTarget.length + 1;
         if (baseEl) {
           baseEl.textContent = normalizedTarget;
+          baseEl.style.visibility = 'visible';
         }
         sounds.playWordComplete();
       } else {
@@ -170,6 +171,7 @@ class SpeedTestGame {
         this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;
         if (baseEl) {
           baseEl.textContent = normalizedInput.length > 0 ? normalizedInput : normalizedTarget;
+          baseEl.style.visibility = 'visible';
         }
         sounds.playError();
       }
@@ -235,6 +237,12 @@ class SpeedTestGame {
     if (isSpace) {
       if (this.currentInput.length === 0) return;
       this.advanceToNextWord();
+      return;
+    }
+
+    // ຈຳກັດຄວາມຍາວບໍ່ໃຫ້ພິມເກີນຄຳສັບເປົ້າໝາຍຫຼາຍເກີນໄປ (ປ້ອງກັນຕົວໜັງສືລົ້ນຕຳໃສ່ຄຳສັບຖັດໄປ)
+    if (this.currentInput.length > currentWord.length + 2) {
+      sounds.playError();
       return;
     }
 
@@ -349,10 +357,15 @@ class SpeedTestGame {
     const targetWord = (this.wordsList[wordIdx] || '').normalize('NFC');
     const input = this.currentInput.normalize('NFC');
     const overlayEl = wordEl.querySelector('.word-overlay');
+    const baseEl = wordEl.querySelector('.word-base');
 
     wordEl.classList.remove('has-error');
 
     if (input.length === 0) {
+      if (baseEl) {
+        baseEl.textContent = targetWord;
+        baseEl.style.visibility = 'visible';
+      }
       if (overlayEl) {
         if (wordIdx === this.currentWordIdx) {
           overlayEl.style.display = 'inline-block';
@@ -373,6 +386,10 @@ class SpeedTestGame {
 
     if (isPrefixMatch) {
       // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100% ພ້ອມ Caret ຊີ້ບອກຕຳແໜ່ງ
+      if (baseEl) {
+        baseEl.textContent = targetWord;
+        baseEl.style.visibility = 'visible';
+      }
       if (overlayEl) {
         const matched = (typeof getMatchedTargetPrefix === 'function') 
           ? getMatchedTargetPrefix(targetWord, input) 
@@ -382,25 +399,54 @@ class SpeedTestGame {
         overlayEl.className = 'word-overlay match';
       }
     } else {
-      // ພິມຜິດ -> ຂຶ້ນສີແດງເຕືອນ
+      // ພິມຜິດ -> ແຍກສ່ວນທີ່ພິມຖືກ (ສີຟ້າ) ແລະ ສ່ວນທີ່ພິມຜິດ (ສີແດງ) ຢ່າງຈະແຈ້ງ
+      // ແລະ ເຊື່ອງຕົວອັກສອນ base ທີ່ຖືກ typed ທັບ ເພື່ອບໍ່ໃຫ້ເກີດການຊ້ອນກັນ (Double Rendering)
       wordEl.classList.add('has-error');
+
+      // ຊອກຫາສ່ວນນຳໜ້າທີ່ພິມຖືກຕ້ອງຍາວທີ່ສຸດ
+      let matched = '';
+      let wrong = input;
+      for (let i = input.length - 1; i >= 1; i--) {
+        const sub = input.substring(0, i);
+        if (typeof isLaoPrefixMatch === 'function' && isLaoPrefixMatch(targetWord, sub)) {
+          matched = (typeof getMatchedTargetPrefix === 'function')
+            ? getMatchedTargetPrefix(targetWord, sub)
+            : sub;
+          wrong = input.substring(i);
+          break;
+        }
+      }
+
       if (overlayEl) {
         overlayEl.style.display = 'inline-block';
-        overlayEl.innerHTML = `${input}<span class="word-caret error-caret"></span>`;
+        overlayEl.innerHTML = `${matched}<span class="char-err">${wrong}</span><span class="word-caret error-caret"></span>`;
         overlayEl.className = 'word-overlay error';
+      }
+
+      if (baseEl) {
+        // ເຊື່ອງ base text ຕາມຈຳນວນຕົວອັກສອນທີ່ພິມແລ້ວ ເພື່ອບໍ່ໃຫ້ຕົວສີແດງຊ້ອນທັບຕົວສີເທົາ
+        const coveredLen = Math.min(matched.length + wrong.length, targetWord.length);
+        const hiddenPart = targetWord.substring(0, coveredLen);
+        const remainingPart = targetWord.substring(coveredLen);
+        baseEl.innerHTML = `<span style="visibility:hidden">${hiddenPart}</span>${remainingPart}`;
       }
     }
   }
 
   scrollToCurrentWord() {
     const wordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
-    if (!wordEl || !this.container) return;
+    if (!wordEl) return;
+    const stream = document.getElementById('speed-words-stream');
+    if (!stream) return;
 
-    const containerRect = this.container.getBoundingClientRect();
-    const wordRect = wordEl.getBoundingClientRect();
+    const streamTop = stream.offsetTop;
+    const wordTop = wordEl.offsetTop - streamTop;
 
-    if (wordRect.top < containerRect.top || wordRect.bottom > containerRect.bottom) {
-      wordEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // ຫາກຄຳສັບຢູ່ແຖວທີ 2 ຫຼື ເກີນນັ້ນ ໃຫ້ເລື່ອນ stream ຂຶ້ນເພື່ອໃຫ້ຄຳສັບປັດຈຸບັນຢູ່ແຖວທີ່ເຫັນໄດ້ຊັດເຈນ
+    if (wordTop - stream.scrollTop >= 65) {
+      stream.scrollTop = wordTop - 7;
+    } else if (wordTop < stream.scrollTop) {
+      stream.scrollTop = wordTop - 7;
     }
   }
 }

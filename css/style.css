@@ -315,7 +315,7 @@ header {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
   font-size: 2.2rem;
   line-height: 2.2;
-  height: 155px;
+  height: 132px;
   overflow: hidden;
   display: flex;
   flex-wrap: wrap;
@@ -381,9 +381,16 @@ header {
 }
 
 .speed-word .word-overlay.error {
-  color: #f43f5e !important;
+  color: #38bdf8 !important;
   font-weight: 600;
-  text-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.speed-word .char-err {
+  color: #f43f5e !important;
+  background: rgba(244, 63, 94, 0.25);
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 .word-caret {
@@ -416,7 +423,7 @@ header {
 }
 
 .speed-word.has-error .word-overlay.error {
-  color: #f43f5e !important;
+  color: #38bdf8 !important;
 }
 
 @keyframes wordShake {

@@ -392,11 +392,13 @@ class PhimLaoApp {
       }
     } else {
       // 3. ຖ້າປິດ autoTranslateLao (ໂໝດຕາມລະບົບ):
-      // ຫາກກົດ Shift ຄ້າງໄວ້ ແຕ່ລະບົບ OS ສົ່ງຕົວປົກກະຕິທີ່ບໍ່ໄດ້ Shift ມາ (ເຊັ່ນ ລ ແທນ ຫຼ, ຫຼື ົ ແທນ ົ້)
+      // ຫາກກົດ Shift ຄ້າງໄວ້ ແຕ່ລະບົບ OS ສົ່ງຕົວປົກກະຕິທີ່ບໍ່ໄດ້ Shift ມາ (ເຊັ່ນ ລ ແທນ ຫຼ, ຫຼື ົ ແທນ ົ້) ຫຼື ສົ່ງ PUA code
       if (isShift && LAO_KEYBOARD_LAYOUT[e.code]) {
         const layout = LAO_KEYBOARD_LAYOUT[e.code];
-        if (char === layout.normal && layout.shift && layout.shift !== layout.normal) {
-          char = layout.shift;
+        if (layout.shift && layout.shift !== layout.normal) {
+          if (char === layout.normal || (char && char.charCodeAt(0) >= 0xF000 && char.charCodeAt(0) <= 0xF00F)) {
+            char = layout.shift;
+          }
         }
       }
     }

@@ -1437,10 +1437,10 @@ footer p {
     font-size: 0.75rem !important;
   }
 
-  /* Mobile Virtual Keyboard: Fully visible, responsive, fit within mobile screen */
+  /* Mobile Virtual Keyboard: Taller keys, comfortable touch target, clear Lao typography */
   .keyboard-section {
     width: 100% !important;
-    padding: 0.25rem 0 0.4rem 0 !important;
+    padding: 0.25rem 0 0.35rem 0 !important;
     margin-top: auto !important;
     flex-shrink: 0;
   }
@@ -1448,8 +1448,8 @@ footer p {
   .keyboard-container {
     display: flex !important;
     flex-direction: column !important;
-    gap: 3px !important;
-    padding: 5px 3px !important;
+    gap: 4px !important;
+    padding: 6px 3px !important;
     border-radius: 12px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -1459,14 +1459,14 @@ footer p {
 
   .kb-row {
     display: flex !important;
-    gap: 2.5px !important;
+    gap: 3px !important;
     width: 100% !important;
     justify-content: center !important;
   }
 
   .key {
-    height: 34px !important;
-    padding: 2px 1px !important;
+    height: 46px !important;
+    padding: 3px 1px !important;
     border-radius: 6px !important;
     border-width: 1px !important;
     touch-action: manipulation !important;
@@ -1474,15 +1474,19 @@ footer p {
     min-width: 0 !important;
   }
 
+  .kb-row:last-child .key {
+    height: 40px !important;
+  }
+
   .key-normal {
-    font-size: 0.95rem !important;
+    font-size: 1.22rem !important;
     line-height: 1 !important;
     font-weight: 600 !important;
     align-self: center !important;
   }
 
   .key-shift {
-    font-size: 0.65rem !important;
+    font-size: 0.72rem !important;
     line-height: 1 !important;
     align-self: flex-end !important;
     color: #94a3b8 !important;
@@ -1494,16 +1498,64 @@ footer p {
   }
 
   .key-special {
-    font-size: 0.65rem !important;
+    font-size: 0.75rem !important;
     line-height: 1 !important;
   }
 
-  .w-backspace { flex: 1.5 1 0px !important; }
+  .w-backspace { flex: 1.55 1 0px !important; }
   .w-tab { flex: 1.2 1 0px !important; }
   .w-caps { flex: 1.3 1 0px !important; }
-  .w-enter { flex: 1.5 1 0px !important; }
+  .w-enter { flex: 1.55 1 0px !important; }
   .w-shift { flex: 1.6 1 0px !important; }
   .w-space { flex: 5 1 0px !important; max-width: none !important; }
+
+  /* Panel Visibility across modes: ensure hidden panels are 100% hidden */
+  #panel-speed[style*="display: none"],
+  #panel-arcade[style*="display: none"],
+  #panel-trainer[style*="display: none"],
+  .arcade-container[style*="display: none"],
+  .trainer-container[style*="display: none"] {
+    display: none !important;
+  }
+
+  /* Arcade Mode on Mobile */
+  .arcade-container {
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  #arcade-canvas {
+    width: 100% !important;
+    height: 240px !important;
+    max-height: calc(100dvh - 360px) !important;
+    min-height: 180px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Trainer Mode on Mobile */
+  .trainer-container {
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 0;
+    min-height: 0;
+  }
+
+  .trainer-word-display {
+    font-size: 2.7rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .trainer-guide-box {
+    margin-bottom: 0.4rem !important;
+  }
 
   .finger-legend {
     display: none !important;
@@ -1514,17 +1566,27 @@ footer p {
   }
 }
 
-@media (max-height: 700px) and (max-width: 768px) {
-  .speed-words-wrapper {
-    height: 70px !important;
-    max-height: 70px !important;
-    font-size: 1.15rem !important;
-  }
+@media (max-height: 720px) and (max-width: 768px) {
   .key {
-    height: 30px !important;
+    height: 38px !important;
   }
   .key-normal {
-    font-size: 0.85rem !important;
+    font-size: 1.05rem !important;
+  }
+  .kb-row:last-child .key {
+    height: 34px !important;
+  }
+  .speed-words-wrapper {
+    height: 72px !important;
+    max-height: 72px !important;
+    font-size: 1.15rem !important;
+  }
+  #arcade-canvas {
+    max-height: calc(100dvh - 300px) !important;
+    min-height: 160px !important;
+  }
+  .trainer-word-display {
+    font-size: 2.2rem !important;
   }
   .stats-bar {
     padding: 0.25rem 0.5rem !important;

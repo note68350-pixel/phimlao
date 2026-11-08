@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=4.9">
+  <link rel="stylesheet" href="css/style.css?v=5.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇱🇦</text></svg>">
 </head>
 <body>
@@ -213,20 +213,19 @@
       </div>
     </div>
 
-    <!-- Sub Settings for Speed Mode -->
-    <div id="speed-sub-settings" class="sub-settings">
-      <button type="button" class="sub-btn" data-speed-setting="time:15">15 ວິນາທີ</button>
-      <button type="button" class="sub-btn active" data-speed-setting="time:30">30 ວິນາທີ</button>
-      <button type="button" class="sub-btn" data-speed-setting="time:60">60 ວິນາທີ</button>
-      <button type="button" class="sub-btn" data-speed-setting="words:10">10 ຄຳສັບ</button>
-      <button type="button" class="sub-btn" data-speed-setting="words:25">25 ຄຳສັບ</button>
-    </div>
-
     <!-- Main Game Viewport -->
     <div class="game-viewport" id="game-main-area">
       
       <!-- Panel 1: Speed Test -->
       <div id="panel-speed">
+        <!-- Sub Settings for Speed Mode -->
+        <div id="speed-sub-settings" class="sub-settings speed-options-bar">
+          <button type="button" class="sub-btn speed-opt-btn" data-speed-setting="time:15">15 ວິນາທີ</button>
+          <button type="button" class="sub-btn speed-opt-btn active" data-speed-setting="time:30">30 ວິນາທີ</button>
+          <button type="button" class="sub-btn speed-opt-btn" data-speed-setting="time:60">60 ວິນາທີ</button>
+          <button type="button" class="sub-btn speed-opt-btn" data-speed-setting="words:10">10 ຄຳສັບ</button>
+          <button type="button" class="sub-btn speed-opt-btn" data-speed-setting="words:25">25 ຄຳສັບ</button>
+        </div>
         <div id="speed-words-container"></div>
       </div>
 
@@ -248,8 +247,8 @@
         </div>
       </div>
 
-      <!-- Restart Button Bar -->
-      <div class="viewport-footer">
+      <!-- Restart Button Bar (Speed & Trainer) -->
+      <div class="viewport-footer" id="main-viewport-footer">
         <button type="button" class="btn-restart btn-restart-game" title="ກົດ Esc ຫຼື ກົດປຸ່ມນີ້ເພື່ອເລີ່ມໃໝ່ (ກົດ Tab ເພື່ອເລື່ອນໄປຄຳຖັດໄປ)">
           🔄 ເລີ່ມໃໝ່ (Esc)
         </button>
@@ -296,12 +295,12 @@
   </footer>
 
   <!-- Scripts with Cache Busting -->
-  <script src="js/words.js?v=4.9"></script>
-  <script src="js/keyboard-layout.js?v=4.9"></script>
-  <script src="js/audio.js?v=4.9"></script>
-  <script src="js/game-speed.js?v=4.9"></script>
-  <script src="js/game-arcade.js?v=4.9"></script>
-  <script src="js/game-trainer.js?v=4.9"></script>
-  <script src="js/app.js?v=4.9"></script>
+  <script src="js/words.js?v=5.0"></script>
+  <script src="js/keyboard-layout.js?v=5.0"></script>
+  <script src="js/audio.js?v=5.0"></script>
+  <script src="js/game-speed.js?v=5.0"></script>
+  <script src="js/game-arcade.js?v=5.0"></script>
+  <script src="js/game-trainer.js?v=5.0"></script>
+  <script src="js/app.js?v=5.0"></script>
 </body>
 </html>

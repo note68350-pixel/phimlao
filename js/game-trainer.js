@@ -109,6 +109,18 @@ class KeyboardTrainer {
     }
   }
 
+  // ປຸ່ມລົບ (Backspace)
+  handleBackspace() {
+    if (this.pendingSwapChar) {
+      this.pendingSwapChar = null;
+      this.updateTarget();
+    } else if (this.charIdx > 0) {
+      this.charIdx = Math.max(0, this.charIdx - 1);
+      this.updateTarget();
+    }
+    sounds.playKeyClick();
+  }
+
   // ລຶບຍ້ອນຫຼັງ 1 ຕົວອັກສອນ (ເມື່ອກົດ Backspace)
   handleBackspace() {
     this.pendingSwapChar = null;

@@ -120,17 +120,22 @@ class PhimLaoApp {
           }
           this.handleVirtualKeyPress({
             code: code,
-            normal: layoutInfo.normal || '',
-            shift: layoutInfo.shift || ''
+            normal: layoutInfo.normal || (special ? special.qwerty : ''),
+            shift: layoutInfo.shift || layoutInfo.normal || (special ? special.qwerty : '')
           });
         };
 
+        let lastPointerTime = 0;
         keyBtn.addEventListener('pointerdown', (e) => {
-          if (e.pointerType === 'touch') {
-            triggerKey(e);
-          }
+          e.preventDefault();
+          lastPointerTime = Date.now();
+          triggerKey(e);
         });
         keyBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (Date.now() - lastPointerTime < 350) {
+            return;
+          }
           triggerKey(e);
         });
 
@@ -562,7 +567,9 @@ class PhimLaoApp {
   }
 
   handleVirtualKeyPress(keyInfo) {
-    if (this.lastVirtualKeyPressTime && Date.now() - this.lastVirtualKeyPressTime < 120) {
+    const isBackspace = (keyInfo.code === 'Backspace' || keyInfo.normal === 'Bksp');
+    const debounceLimit = isBackspace ? 30 : 50;
+    if (this.lastVirtualKeyPressTime && Date.now() - this.lastVirtualKeyPressTime < debounceLimit) {
       return;
     }
     this.lastVirtualKeyPressTime = Date.now();
@@ -579,13 +586,17 @@ class PhimLaoApp {
       this.setShiftState(false);
     }
 
-    if (char === 'Bksp') {
+    if (isBackspace || char === 'Bksp') {
       if (this.currentMode === 'speed') {
         this.speedGame.handleInput('', true, false);
       } else if (this.currentMode === 'trainer') {
         this.trainerGame.handleBackspace();
       }
-    } else if (char === ' ') {
+      return;
+    }
+
+    const isSpace = (keyInfo.code === 'Space' || keyInfo.normal === 'Space' || char === ' ');
+    if (isSpace) {
       if (this.currentMode === 'speed') {
         this.speedGame.handleInput('', false, true);
       } else if (this.currentMode === 'arcade') {
@@ -593,7 +604,27 @@ class PhimLaoApp {
       } else if (this.currentMode === 'trainer') {
         this.trainerGame.advanceToNextWord();
       }
-    } else if (char) {
+      return;
+    }
+
+    const isTab = (keyInfo.code === 'Tab' || keyInfo.normal === 'Tab' || char === 'Tab');
+    if (isTab) {
+      if (this.currentMode === 'speed') {
+        this.speedGame.advanceToNextWord(true);
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.advanceToNextWord();
+      }
+      return;
+    }
+
+    if (keyInfo.code === 'Enter') {
+      if (this.currentMode === 'speed') {
+        this.speedGame.advanceToNextWord(false);
+      }
+      return;
+    }
+
+    if (char) {
       this.routeCharacterInput(char);
     }
   }
@@ -653,13 +684,23 @@ class PhimLaoApp {
     });
 
     this.speedPanel.style.display = (mode === 'speed') ? 'block' : 'none';
-    this.arcadePanel.style.display = (mode === 'arcade') ? 'block' : 'none';
-    this.trainerPanel.style.display = (mode === 'trainer') ? 'block' : 'none';
+    this.arcadePanel.style.display = (mode === 'arcade') ? 'flex' : 'none';
+    this.trainerPanel.style.display = (mode === 'trainer') ? 'flex' : 'none';
 
     // ຈັດການແຖບສະຖິຕິຕາມໂໝດ
     document.getElementById('stats-speed-bar').style.display = (mode === 'speed') ? 'flex' : 'none';
     document.getElementById('stats-arcade-bar').style.display = (mode === 'arcade') ? 'flex' : 'none';
     document.getElementById('stats-trainer-bar').style.display = (mode === 'trainer') ? 'flex' : 'none';
+
+    // ຈັດການ Sub-Settings ແລະ ປຸ່ມ Restart ໃຫ້ສະແດງສະເພາະໂໝດທີ່ກ່ຽວຂ້ອງ
+    const speedSubSettings = document.getElementById('speed-sub-settings');
+    if (speedSubSettings) {
+      speedSubSettings.style.display = (mode === 'speed') ? 'flex' : 'none';
+    }
+    const restartFooter = document.getElementById('main-viewport-footer');
+    if (restartFooter) {
+      restartFooter.style.display = (mode === 'arcade') ? 'none' : 'flex';
+    }
 
     // ເມື່ອສະຫຼັບໄປໂໝດ Arcade
     if (mode === 'arcade') {

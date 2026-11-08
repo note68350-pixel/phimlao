@@ -373,7 +373,11 @@ class SpeedTestGame {
     if (isPrefixMatch) {
       // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100% ພ້ອມ Caret ຊີ້ບອກຕຳແໜ່ງ
       if (overlayEl) {
-        overlayEl.innerHTML = `${input}<span class="word-caret"></span>`;
+        const matched = (typeof getMatchedTargetPrefix === 'function') 
+          ? getMatchedTargetPrefix(targetWord, input) 
+          : input;
+        overlayEl.style.display = 'inline-flex';
+        overlayEl.innerHTML = `${matched}<span class="word-caret"></span>`;
         overlayEl.className = 'word-overlay match';
       }
     } else {

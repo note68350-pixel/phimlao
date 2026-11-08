@@ -356,19 +356,33 @@ class ArcadeGame {
 
       // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳ 100% ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
       if (isTargeted) {
-        // ແຕ້ມແຖບເສັ້ນຄວາມຄືບໜ້າການພິມຢູ່ກ້ອງຄຳສັບ (Neon Green Bar)
-        const typedLen = canonicalizeLao(this.typedInput || '').length;
-        const totalLen = canonicalizeLao(w.text).length;
-        const progressRatio = typedLen > 0 ? Math.min(1, Math.max(0.1, typedLen / totalLen)) : 0;
+        // 1. ແຕ້ມຄຳສັບພື້ນຖານທັງໝົດເປັນສີເທົາ (Untyped characters stay grey)
+        this.ctx.fillStyle = '#64748b';
+        this.ctx.fillText(w.text, w.x, w.y);
 
-        if (progressRatio > 0) {
-          this.ctx.fillStyle = '#22c55e';
-          this.ctx.fillRect(w.x, w.y + 6, w.width * progressRatio, 3.5);
+        // 2. ລົງສີຟ້າສົດໃສ (Electric Cyan #00f2fe) ໃສ່ສະເພາະຕົວອັກສອນທີ່ພິມຖືກຕ້ອງແລ້ວ!
+        const matchedPrefix = (typeof getMatchedTargetPrefix === 'function') 
+          ? getMatchedTargetPrefix(w.text, this.typedInput) 
+          : (this.typedInput || '');
+
+        if (matchedPrefix && matchedPrefix.length > 0) {
+          this.ctx.save();
+          this.ctx.fillStyle = '#00f2fe';
+          this.ctx.shadowColor = 'rgba(0, 242, 254, 0.9)';
+          this.ctx.shadowBlur = 12;
+          this.ctx.fillText(matchedPrefix, w.x, w.y);
+          this.ctx.restore();
         }
 
-        // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳດ້ວຍສີຟ້າສົດໃສ ບໍ່ຕັດແຍກສະຫຼະ
-        this.ctx.fillStyle = '#38bdf8';
-        this.ctx.fillText(w.text, w.x, w.y);
+        // 3. ແຕ້ມແຖບເສັ້ນຄວາມຄືບໜ້າການພິມຢູ່ກ້ອງຄຳສັບ (Neon Cyan Bar)
+        const typedLen = canonicalizeLao(this.typedInput || '').length;
+        const totalLen = canonicalizeLao(w.text).length;
+        const progressRatio = typedLen > 0 ? Math.min(1, Math.max(0.08, typedLen / totalLen)) : 0;
+
+        if (progressRatio > 0) {
+          this.ctx.fillStyle = '#00f2fe';
+          this.ctx.fillRect(w.x, w.y + 6, w.width * progressRatio, 3.5);
+        }
       } else {
         this.ctx.fillStyle = '#f8fafc';
         this.ctx.fillText(w.text, w.x, w.y);

@@ -409,6 +409,26 @@ function canonicalizeLao(str) {
   return s;
 }
 
+/**
+ * ຊອກຫາສ່ວນນຳໜ້າຂອງຄຳສັບເປົ້າໝາຍທີ່ພິມຖືກຕ້ອງແລ້ວ ເພື່ອນຳໄປລົງສີຟ້າ (Cyan Overlay) ໃຫ້ຕົກກັບໂຕອັກສອນພື້ນຖານ 100%
+ */
+function getMatchedTargetPrefix(targetWord, typedInput) {
+  if (!typedInput || !targetWord) return '';
+  const canonInput = canonicalizeLao(typedInput);
+  let bestPrefix = '';
+  for (let i = 1; i <= targetWord.length; i++) {
+    const sub = targetWord.substring(0, i);
+    const canonSub = canonicalizeLao(sub);
+    if (canonSub === canonInput) {
+      return sub;
+    }
+    if (canonInput.startsWith(canonSub)) {
+      bestPrefix = sub;
+    }
+  }
+  return bestPrefix || targetWord.substring(0, Math.min(typedInput.length, targetWord.length));
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao };
+  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, getMatchedTargetPrefix };
 }

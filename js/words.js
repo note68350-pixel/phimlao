@@ -453,7 +453,10 @@ function getMatchedTargetPrefix(targetWord, typedInput) {
   for (let i = 1; i <= targetWord.length; i++) {
     const sub = targetWord.substring(0, i);
     const canonSub = canonicalizeLao(sub);
-    if (canonSub === canonInput || isLaoPrefixMatch(sub, typedInput)) {
+    if (canonSub === canonInput) {
+      return sub;
+    }
+    if (canonInput.startsWith(canonSub)) {
       bestPrefix = sub;
     }
   }

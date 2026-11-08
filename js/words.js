@@ -405,8 +405,42 @@ function canonicalizeLao(str) {
   s = s.replace(/ໜ/g, 'ຫນ');
   s = s.replace(/ຫຼ/g, 'ຫລ');
   s = s.replace(/\u0EBC/g, 'ລ'); // ຼ
-  s = s.replace(new RegExp('([\u0EC8-\u0ECC])([\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD\u0EB2\u0EB3])', 'g'), '$2$1');
+  // ຫາກພິມສະຫຼະ ອຳ (ຳ) ແລ້ວຕາມດ້ວຍວັນນະຍຸດ (ເຊັ່ນ ຳ + ້), ໃຫ້ແປງເປັນ ວັນນະຍຸດ + ຳ ໃຫ້ຕົກກັບຄັງຄຳສັບມາດຕະຖານ
+  s = s.replace(/([\u0EB3])([\u0EC8-\u0ECC])/g, '$2$1');
+  // ຫາກພິມວັນນະຍຸດກ່ອນສະຫຼະອື່ນໆ (ເຊັ່ນ ້ + ັ, ້ + ິ, ້ + ົ, ້ + ຸ, ້ + ູ, ້ + ໍ), ໃຫ້ຈັດລຽງເປັນ ສະຫຼະ + ວັນນະຍຸດ
+  s = s.replace(/([\u0EC8-\u0ECC])([\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD])/g, '$2$1');
   return s;
+}
+
+/**
+ * ກວດສອບວ່າ typedInput ເປັນສ່ວນນຳໜ້າ (Prefix) ທີ່ຖືກຕ້ອງຂອງ targetWord ຫຼື ບໍ່
+ * ຮອງຮັບການພິມສະຫຼະ-ວັນນະຍຸດທັງ 2 ແບບ: ວັນນະຍຸດກ່ອນສະຫຼະອຳ (ນ້ຳ) ຫຼື ສະຫຼະອຳກ່ອນວັນນະຍຸດ (ນຳ້)
+ * ແລະ ຮອງຮັບຕົວປະສົມ: ໝ <-> ຫມ, ໜ <-> ຫນ, ຫຼ <-> ຫລ
+ */
+function isLaoPrefixMatch(targetWord, typedInput) {
+  if (!typedInput) return true;
+  if (!targetWord) return false;
+
+  const canonTarget = canonicalizeLao(targetWord);
+  const canonInput = canonicalizeLao(typedInput);
+
+  if (canonTarget.startsWith(canonInput)) {
+    return true;
+  }
+
+  // ກໍລະນີພິມສະຫຼະອຳ (ຳ) ກ່ອນວັນນະຍຸດໃນຂະນະທີ່ຄຳສັບເປົ້າໝາຍມີວັນນະຍຸດກ່ອນ (ເຊັ່ນ ພິມ 'ນຳ' ສຳລັບ 'ນ້ຳ')
+  // ປຽບທຽບໂດຍການຕັດວັນນະຍຸດອອກຊົ່ວຄາວ ເພື່ອກວດສອບພະຍັນຊະນະແລະສະຫຼະຫຼັກ
+  const targetNoTones = canonTarget.replace(/[\u0EC8-\u0ECC]/g, '');
+  const inputNoTones = canonInput.replace(/[\u0EC8-\u0ECC]/g, '');
+
+  if (targetNoTones.startsWith(inputNoTones)) {
+    // ຖ້າພະຍັນຊະນະແລະສະຫຼະຕົກກັນ, ກວດສອບວ່າວັນນະຍຸດທີ່ພິມໄປແລ້ວ (ຖ້າມີ) ແມ່ນຖືກຕ້ອງ
+    const typedTones = canonInput.match(/[\u0EC8-\u0ECC]/g) || [];
+    const targetTones = canonTarget.substring(0, canonInput.length + 2).match(/[\u0EC8-\u0ECC]/g) || [];
+    return typedTones.every(t => targetTones.includes(t));
+  }
+
+  return false;
 }
 
 /**
@@ -419,10 +453,7 @@ function getMatchedTargetPrefix(targetWord, typedInput) {
   for (let i = 1; i <= targetWord.length; i++) {
     const sub = targetWord.substring(0, i);
     const canonSub = canonicalizeLao(sub);
-    if (canonSub === canonInput) {
-      return sub;
-    }
-    if (canonInput.startsWith(canonSub)) {
+    if (canonSub === canonInput || isLaoPrefixMatch(sub, typedInput)) {
       bestPrefix = sub;
     }
   }
@@ -430,5 +461,5 @@ function getMatchedTargetPrefix(targetWord, typedInput) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, getMatchedTargetPrefix };
+  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, isLaoPrefixMatch, getMatchedTargetPrefix };
 }

@@ -245,11 +245,12 @@ class SpeedTestGame {
     const normalizedInput = this.currentInput.normalize('NFC');
     const normalizedTarget = currentWord.normalize('NFC');
 
-    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ canonicalizeLao
-    const canonTarget = canonicalizeLao(normalizedTarget);
-    const canonInput = canonicalizeLao(normalizedInput);
+    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ isLaoPrefixMatch (ຮອງຮັບທັງ ນ້ຳ ແລະ ນຳ້, ໝູ ແລະ ຫມູ)
+    const isPrefixMatch = (typeof isLaoPrefixMatch === 'function')
+      ? isLaoPrefixMatch(normalizedTarget, normalizedInput)
+      : canonicalizeLao(normalizedTarget).startsWith(canonicalizeLao(normalizedInput));
 
-    if (canonTarget.startsWith(canonInput)) {
+    if (isPrefixMatch) {
       this.correctChars++;
       sounds.playCorrectChar();
     } else {
@@ -365,10 +366,10 @@ class SpeedTestGame {
       return;
     }
 
-    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ canonicalizeLao
-    const canonTarget = canonicalizeLao(targetWord);
-    const canonInput = canonicalizeLao(input);
-    const isPrefixMatch = canonTarget.startsWith(canonInput);
+    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ isLaoPrefixMatch
+    const isPrefixMatch = (typeof isLaoPrefixMatch === 'function')
+      ? isLaoPrefixMatch(targetWord, input)
+      : canonicalizeLao(targetWord).startsWith(canonicalizeLao(input));
 
     if (isPrefixMatch) {
       // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100% ພ້ອມ Caret ຊີ້ບອກຕຳແໜ່ງ

@@ -19,6 +19,7 @@ class KeyboardTrainer {
     this.errorCount = 0;
     this.mistypedWords = {};
     this.mistypedChars = {};
+    this.pendingSwapChar = null;
 
     this.activeKeyElement = null;
     this.activeShiftElement = null;
@@ -33,11 +34,19 @@ class KeyboardTrainer {
     this.reset();
   }
 
+  clearHighlights() {
+    document.querySelectorAll('.key.highlight-target, .key.highlight-shift, .key.key-active, .key.key-shake').forEach(el => {
+      el.classList.remove('highlight-target', 'highlight-shift', 'key-active', 'key-shake');
+    });
+  }
+
   reset() {
+    this.clearHighlights();
     const list = LAO_WORDS[this.options.difficulty] || LAO_WORDS.easy;
     this.currentList = [...list].sort(() => 0.5 - Math.random()).slice(0, 20);
     this.wordIdx = 0;
     this.charIdx = 0;
+    this.pendingSwapChar = null;
     this.totalTyped = 0;
     this.correctCount = 0;
     this.errorCount = 0;
@@ -51,7 +60,7 @@ class KeyboardTrainer {
     const wordObj = this.currentList[this.wordIdx];
     if (!wordObj) return null;
     const word = wordObj.word.normalize('NFC');
-    const targetChar = word[this.charIdx];
+    const targetChar = this.pendingSwapChar ? this.pendingSwapChar : word[this.charIdx];
     return {
       word: word,
       char: targetChar,
@@ -63,7 +72,9 @@ class KeyboardTrainer {
 
   // ເລື່ອນໄປຄຳສັບຖັດໄປ (ເມື່ອກົດ Tab)
   advanceToNextWord() {
+    this.clearHighlights();
     this.charIdx = 0;
+    this.pendingSwapChar = null;
     this.wordIdx++;
     sounds.playWordComplete();
 
@@ -86,6 +97,7 @@ class KeyboardTrainer {
 
   // ລຶບຍ້ອນຫຼັງ 1 ຕົວອັກສອນ (ເມື່ອກົດ Backspace)
   handleBackspace() {
+    this.pendingSwapChar = null;
     if (this.charIdx > 0) {
       this.charIdx--;
       this.updateTarget();
@@ -100,21 +112,63 @@ class KeyboardTrainer {
     this.totalTyped++;
 
     const normInput = char.normalize('NFC');
+    const word = target.word;
     const normTarget = target.char.normalize('NFC');
 
-    // ປຽບທຽບດ້ວຍ canonicalizeLao
-    if (normInput === normTarget || canonicalizeLao(normInput) === canonicalizeLao(normTarget)) {
+    let isMatch = false;
+
+    // 1. ກວດສອບຖ້າມີ pendingSwapChar (ຜູ້ໃຊ້ພິມສະຫຼະ/ວັນນະຍຸດສະຫຼັບລຳດັບ)
+    if (this.pendingSwapChar) {
+      if (normInput === this.pendingSwapChar || canonicalizeLao(normInput) === canonicalizeLao(this.pendingSwapChar)) {
+        isMatch = true;
+        this.pendingSwapChar = null;
+        this.charIdx += 2; // ຂ້າມທັງສອງຕົວອັກສອນທີ່ພິມຄົບແລ້ວ
+      }
+    } 
+    // 2. ກວດສອບຕົກກັບຕົວອັກສອນເປົ້າໝາຍປົກກະຕິ
+    else if (normInput === normTarget || canonicalizeLao(normInput) === canonicalizeLao(normTarget)) {
+      isMatch = true;
+      this.charIdx++;
+    } 
+    // 3. ກວດສອບກໍລະນີຜູ້ໃຊ້ພິມ ວັນນະຍຸດ/ສະຫຼະ ສະຫຼັບກັນ (ເຊັ່ນ ພິມ ຳ ກ່ອນ ້ ຫຼື ້ ກ່ອນ ຳ)
+    else if (this.charIdx + 1 < word.length) {
+      const nextChar = word[this.charIdx + 1].normalize('NFC');
+      const isToneTarget = /[\u0EC8-\u0ECC]/.test(normTarget);
+      const isVowelNext = /[\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD\u0EB2\u0EB3]/.test(nextChar);
+      const isVowelTarget = /[\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD\u0EB2\u0EB3]/.test(normTarget);
+      const isToneNext = /[\u0EC8-\u0ECC]/.test(nextChar);
+
+      if ((normInput === nextChar || canonicalizeLao(normInput) === canonicalizeLao(nextChar)) &&
+          ((isToneTarget && isVowelNext) || (isVowelTarget && isToneNext))) {
+        isMatch = true;
+        this.pendingSwapChar = normTarget; // ຕົວຖັດໄປທີ່ຕ້ອງພິມແມ່ນ normTarget
+      }
+    }
+    // 4. ຮອງຮັບການພິມຕົວປະສົມ: ຫ + ມ -> ໝ, ຫ + ນ -> ໜ, ຫ + ລ -> ຫຼ
+    else if (normTarget === 'ໝ' && normInput === 'ຫ') {
+      isMatch = true;
+      this.pendingSwapChar = 'ມ';
+    } else if (normTarget === 'ໜ' && normInput === 'ຫ') {
+      isMatch = true;
+      this.pendingSwapChar = 'ນ';
+    } else if (normTarget === 'ຫຼ' && normInput === 'ຫ') {
+      isMatch = true;
+      this.pendingSwapChar = 'ລ';
+    }
+
+    if (isMatch) {
       this.correctCount++;
       sounds.playCorrectChar();
-      this.charIdx++;
 
       // ຖ້າພິມຄົບຄຳສັບແລ້ວ
-      if (this.charIdx >= target.word.length) {
+      if (this.charIdx >= word.length) {
         sounds.playWordComplete();
         this.charIdx = 0;
+        this.pendingSwapChar = null;
         this.wordIdx++;
 
         if (this.wordIdx >= this.currentList.length) {
+          this.clearHighlights();
           sounds.playGameOver(true);
           if (this.options.onComplete) {
             this.options.onComplete(this.getStats());

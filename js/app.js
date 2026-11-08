@@ -257,7 +257,7 @@ class PhimLaoApp {
     // Global Keydown & Keyup Listener
     window.addEventListener('keydown', (e) => this.handleKeyDown(e));
     window.addEventListener('keyup', (e) => this.handleKeyUp(e));
-    window.addEventListener('blur', () => this.setShiftState(false));
+    window.addEventListener('blur', () => this.clearAllVirtualKeyStates());
 
     // Focus mobile input ONLY on touch/mobile devices
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
@@ -389,6 +389,10 @@ class PhimLaoApp {
     if (e.key === 'Shift') {
       this.setShiftState(false);
     }
+    const keyEl = document.querySelector(`.key[data-code="${e.code}"]`);
+    if (keyEl) {
+      keyEl.classList.remove('key-active');
+    }
   }
 
   handleVirtualKeyPress(keyInfo) {
@@ -430,8 +434,17 @@ class PhimLaoApp {
     }
   }
 
+  clearAllVirtualKeyStates() {
+    document.querySelectorAll('.key').forEach(el => {
+      el.classList.remove('highlight-target', 'highlight-shift', 'key-active', 'key-shake', 'shift-pressed');
+    });
+    this.isShiftActive = false;
+    this.setShiftState(false);
+  }
+
   switchMode(mode) {
     this.currentMode = mode;
+    this.clearAllVirtualKeyStates();
 
     this.speedPanel.style.display = (mode === 'speed') ? 'block' : 'none';
     this.arcadePanel.style.display = (mode === 'arcade') ? 'block' : 'none';
@@ -449,6 +462,10 @@ class PhimLaoApp {
         this.arcadeGame.start();
         this.arcadeGame.spawnWord();
       }, 60);
+    } else if (mode === 'trainer') {
+      this.arcadeGame.stop();
+      this.restartCurrentGame();
+      this.trainerGame.updateTarget();
     } else {
       this.arcadeGame.stop();
       this.restartCurrentGame();
@@ -457,6 +474,7 @@ class PhimLaoApp {
 
   switchDifficulty(diff) {
     this.difficulty = diff;
+    this.clearAllVirtualKeyStates();
     this.speedGame.setDifficulty(diff);
     this.arcadeGame.setDifficulty(diff);
     this.trainerGame.setDifficulty(diff);
@@ -467,6 +485,7 @@ class PhimLaoApp {
     if (this.resultModal) {
       this.resultModal.style.display = 'none';
     }
+    this.clearAllVirtualKeyStates();
 
     if (this.currentMode === 'speed') {
       this.speedGame.reset();

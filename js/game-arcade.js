@@ -143,9 +143,8 @@ class ArcadeGame {
 
     // ຖ້າຍັງບໍ່ມີຄຳສັບທີ່ຖືກລັອກເປົ້າໝາຍ
     if (!this.activeWord) {
-      // ຊອກຫາຄຳສັບທີ່ຂຶ້ນຕົ້ນດ້ວຍ char ນີ້ ໂດຍໃຊ້ canonicalizeLao
-      const canonChar = canonicalizeLao(char);
-      const candidates = this.words.filter(w => canonicalizeLao(w.text).startsWith(canonChar));
+      // ຊອກຫາຄຳສັບທີ່ຂຶ້ນຕົ້ນດ້ວຍ char ນີ້ ໂດຍໃຊ້ isLaoPrefixMatch
+      const candidates = this.words.filter(w => isLaoPrefixMatch(w.text, char));
       if (candidates.length > 0) {
         // ເອົາຄຳທີ່ໃກ້ເຖິງພື້ນທີ່ສຸດ
         candidates.sort((a, b) => b.y - a.y);
@@ -167,16 +166,15 @@ class ArcadeGame {
     } else {
       // ກວດສອບກັບຄຳສັບທີ່ລັອກໄວ້
       const nextInput = this.typedInput + char;
-      const targetCanon = canonicalizeLao(this.activeWord.text);
-      const inputCanon = canonicalizeLao(nextInput);
+      const isMatch = isLaoPrefixMatch(this.activeWord.text, nextInput);
 
-      if (targetCanon.startsWith(inputCanon)) {
+      if (isMatch) {
         this.typedInput = nextInput;
         this.typedLength++;
         sounds.playCorrectChar();
         this.createHitParticles(this.activeWord.x, this.activeWord.y);
 
-        if (inputCanon === targetCanon) {
+        if (canonicalizeLao(this.typedInput) === canonicalizeLao(this.activeWord.text)) {
           this.destroyActiveWord();
         }
       } else {

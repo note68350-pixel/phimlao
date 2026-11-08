@@ -368,8 +368,7 @@ header {
   font-size: 1.65rem;
   line-height: 1.6;
   color: var(--text-main);
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   letter-spacing: normal !important;
   pointer-events: none;
   white-space: nowrap;
@@ -390,18 +389,18 @@ header {
 .word-caret {
   display: inline-block;
   width: 2.5px;
-  height: 1.15em;
+  height: 1.1rem;
   background-color: #38bdf8;
-  margin-left: 2px;
-  vertical-align: middle;
+  margin-left: 1px;
+  vertical-align: -0.2rem;
   border-radius: 1px;
-  box-shadow: 0 0 8px #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
   animation: blinkCaret 0.85s infinite;
 }
 
 .word-caret.error-caret {
   background-color: #f43f5e;
-  box-shadow: 0 0 8px #f43f5e;
+  box-shadow: 0 0 6px #f43f5e;
 }
 
 @keyframes blinkCaret {

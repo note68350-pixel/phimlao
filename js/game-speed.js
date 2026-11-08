@@ -354,7 +354,7 @@ class SpeedTestGame {
     if (input.length === 0) {
       if (overlayEl) {
         if (wordIdx === this.currentWordIdx) {
-          overlayEl.style.display = 'inline-flex';
+          overlayEl.style.display = 'inline-block';
           overlayEl.innerHTML = '<span class="word-caret"></span>';
         } else {
           overlayEl.style.display = 'none';
@@ -376,7 +376,7 @@ class SpeedTestGame {
         const matched = (typeof getMatchedTargetPrefix === 'function') 
           ? getMatchedTargetPrefix(targetWord, input) 
           : input;
-        overlayEl.style.display = 'inline-flex';
+        overlayEl.style.display = 'inline-block';
         overlayEl.innerHTML = `${matched}<span class="word-caret"></span>`;
         overlayEl.className = 'word-overlay match';
       }
@@ -384,6 +384,7 @@ class SpeedTestGame {
       // ພິມຜິດ -> ຂຶ້ນສີແດງເຕືອນ
       wordEl.classList.add('has-error');
       if (overlayEl) {
+        overlayEl.style.display = 'inline-block';
         overlayEl.innerHTML = `${input}<span class="word-caret error-caret"></span>`;
         overlayEl.className = 'word-overlay error';
       }

@@ -332,9 +332,10 @@ header {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.5rem;
+  padding: 0.25rem 0.55rem;
+  margin: 0.2rem 0.3rem;
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   letter-spacing: normal !important;
   word-spacing: normal !important;
   transition: all 0.15s ease;
@@ -342,20 +343,30 @@ header {
 
 .speed-word .word-base {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
-  color: #475569;
+  color: #64748b;
   display: inline-block;
   letter-spacing: normal !important;
+  font-size: 1.65rem;
+  line-height: 1.6;
+}
+
+.speed-word.current {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.2);
 }
 
 .speed-word.current .word-base {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .speed-word .word-overlay {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
   position: absolute;
-  top: 0.15rem;
-  left: 0.5rem;
+  top: 0.25rem;
+  left: 0.55rem;
+  font-size: 1.65rem;
+  line-height: 1.6;
   color: var(--text-main);
   display: inline-flex;
   align-items: center;
@@ -365,42 +376,37 @@ header {
 }
 
 .speed-word .word-overlay.match {
-  color: #00f2fe !important;
-  font-weight: 700;
-  text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+  color: #38bdf8 !important;
+  font-weight: 600;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
 }
 
 .speed-word .word-overlay.error {
-  color: #ff3366 !important;
-  font-weight: 700;
-  text-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
+  color: #f43f5e !important;
+  font-weight: 600;
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
 }
 
 .word-caret {
   display: inline-block;
-  width: 2px;
+  width: 2.5px;
   height: 1.15em;
-  background-color: #00f2fe;
-  margin-left: 1.5px;
-  vertical-align: text-bottom;
-  box-shadow: 0 0 6px #00f2fe;
-  animation: blinkCaret 0.8s infinite;
+  background-color: #38bdf8;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-radius: 1px;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: blinkCaret 0.85s infinite;
 }
 
 .word-caret.error-caret {
-  background-color: #ff3366;
-  box-shadow: 0 0 6px #ff3366;
+  background-color: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
 }
 
 @keyframes blinkCaret {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
-}
-
-.speed-word.current {
-  background: rgba(0, 242, 254, 0.08);
-  border-color: rgba(0, 242, 254, 0.45);
-  box-shadow: 0 0 14px rgba(0, 242, 254, 0.2);
 }
 
 .speed-word.has-error {
@@ -411,7 +417,7 @@ header {
 }
 
 .speed-word.has-error .word-overlay.error {
-  color: #ff3366 !important;
+  color: #f43f5e !important;
 }
 
 @keyframes wordShake {
@@ -420,16 +426,28 @@ header {
   75% { transform: translateX(3px); }
 }
 
+/* Completed correct word - Clean, bright cyan, NO strikethrough, NO caret */
+.speed-word.word-correct {
+  border-color: transparent;
+  background: transparent;
+}
+
 .speed-word.word-correct .word-base {
-  color: #334155;
-  text-decoration: line-through;
-  opacity: 0.6;
+  color: #38bdf8 !important;
+  text-decoration: none !important;
+  opacity: 1 !important;
+}
+
+/* Completed incorrect word - Red text with wavy underline */
+.speed-word.word-incorrect {
+  border-color: transparent;
+  background: transparent;
 }
 
 .speed-word.word-incorrect .word-base {
-  color: var(--error);
-  text-decoration: line-through;
-  opacity: 0.75;
+  color: #f43f5e !important;
+  text-decoration: underline wavy #f43f5e !important;
+  opacity: 0.9 !important;
 }
 
 /* ========================================================

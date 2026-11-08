@@ -147,14 +147,30 @@ class SpeedTestGame {
     const currentWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
     if (currentWordEl) {
       currentWordEl.classList.remove('current', 'has-error');
+
+      // ເຄຼຍ ແລະ ເຊື່ອງ overlay ຂອງຄຳສັບທີ່ພິມແລ້ວທັນທີ (ເພື່ອບໍ່ໃຫ້ caret | ຕົກຄ້າງ)
+      const overlayEl = currentWordEl.querySelector('.word-overlay');
+      if (overlayEl) {
+        overlayEl.innerHTML = '';
+        overlayEl.style.display = 'none';
+      }
+
+      const baseEl = currentWordEl.querySelector('.word-base');
+
       if (isWordCorrect) {
         currentWordEl.classList.add('word-correct');
         this.correctChars += normalizedTarget.length + 1;
+        if (baseEl) {
+          baseEl.textContent = normalizedTarget;
+        }
         sounds.playWordComplete();
       } else {
         currentWordEl.classList.add('word-incorrect');
         this.errorChars += Math.max(1, Math.abs(normalizedTarget.length - normalizedInput.length));
         this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;
+        if (baseEl) {
+          baseEl.textContent = normalizedInput.length > 0 ? normalizedInput : normalizedTarget;
+        }
         sounds.playError();
       }
     }
@@ -337,7 +353,13 @@ class SpeedTestGame {
 
     if (input.length === 0) {
       if (overlayEl) {
-        overlayEl.innerHTML = (wordIdx === this.currentWordIdx) ? '<span class="word-caret"></span>' : '';
+        if (wordIdx === this.currentWordIdx) {
+          overlayEl.style.display = 'inline-flex';
+          overlayEl.innerHTML = '<span class="word-caret"></span>';
+        } else {
+          overlayEl.style.display = 'none';
+          overlayEl.innerHTML = '';
+        }
         overlayEl.className = 'word-overlay';
       }
       return;

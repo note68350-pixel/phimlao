@@ -342,9 +342,13 @@ header {
 
 .speed-word .word-base {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
-  color: var(--text-sub);
+  color: #475569;
   display: inline-block;
   letter-spacing: normal !important;
+}
+
+.speed-word.current .word-base {
+  color: #64748b;
 }
 
 .speed-word .word-overlay {
@@ -353,50 +357,61 @@ header {
   top: 0.15rem;
   left: 0.5rem;
   color: var(--text-main);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   letter-spacing: normal !important;
   pointer-events: none;
   white-space: nowrap;
 }
 
 .speed-word .word-overlay.match {
-  color: #38bdf8;
+  color: #00f2fe !important;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
 }
 
 .speed-word .word-overlay.error {
-  color: var(--error);
+  color: #ff3366 !important;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(255, 51, 102, 0.6);
+}
+
+.word-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  background-color: #00f2fe;
+  margin-left: 1.5px;
+  vertical-align: text-bottom;
+  box-shadow: 0 0 6px #00f2fe;
+  animation: blinkCaret 0.8s infinite;
+}
+
+.word-caret.error-caret {
+  background-color: #ff3366;
+  box-shadow: 0 0 6px #ff3366;
+}
+
+@keyframes blinkCaret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .speed-word.current {
-  background: rgba(56, 189, 248, 0.12);
-  border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
-}
-
-.speed-word.current::before {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 15%;
-  height: 70%;
-  width: 2px;
-  background: var(--accent);
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  background: rgba(0, 242, 254, 0.08);
+  border-color: rgba(0, 242, 254, 0.45);
+  box-shadow: 0 0 14px rgba(0, 242, 254, 0.2);
 }
 
 .speed-word.has-error {
   background: rgba(244, 63, 94, 0.15);
   border-color: var(--error);
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.3);
   animation: wordShake 0.25s ease-in-out;
 }
 
 .speed-word.has-error .word-overlay.error {
-  color: var(--error);
+  color: #ff3366 !important;
 }
 
 @keyframes wordShake {
@@ -406,7 +421,9 @@ header {
 }
 
 .speed-word.word-correct .word-base {
-  color: #94a3b8;
+  color: #334155;
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .speed-word.word-incorrect .word-base {
@@ -747,9 +764,11 @@ header {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 20px;
-  padding: 2rem;
-  max-width: 500px;
+  padding: 1.75rem;
+  max-width: 560px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0,0,0,0.6);
   animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -767,6 +786,49 @@ header {
   color: #fff;
 }
 
+/* Star Rating */
+.star-rating-box {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.stars-row {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 2.3rem;
+  line-height: 1;
+}
+
+.star-glyph {
+  transition: all 0.2s ease;
+}
+
+.star-glyph.filled {
+  color: #fbbf24;
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.75);
+  animation: starPop 0.4s ease;
+}
+
+.star-glyph.empty {
+  color: #334155;
+  opacity: 0.5;
+}
+
+@keyframes starPop {
+  0% { transform: scale(0.5); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.star-rating-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
 .result-rank {
   font-size: 1.25rem;
   font-weight: 600;
@@ -778,7 +840,80 @@ header {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Mistake Analysis Section */
+.mistake-analysis-container {
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.analysis-block {
+  background: #0f172a;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.analysis-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mistake-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: 8px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  color: #fecdd3;
+}
+
+.mistake-chip.char-chip {
+  background: rgba(234, 179, 8, 0.12);
+  border-color: rgba(234, 179, 8, 0.35);
+  color: #fef08a;
+}
+
+.chip-text {
+  font-weight: 600;
+}
+
+.char-symbol {
+  font-family: 'Noto Sans Lao', system-ui, sans-serif;
+  font-size: 1.15rem;
+  color: #facc15;
+}
+
+.chip-count {
+  font-size: 0.72rem;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.chip-perfect {
+  font-size: 0.85rem;
+  color: #34d399;
+  font-weight: 500;
 }
 
 .res-card {

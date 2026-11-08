@@ -503,6 +503,61 @@ class PhimLaoApp {
     if (trainerAcc) trainerAcc.textContent = `${stats.accuracy}%`;
   }
 
+  renderStarRating(stars, titleText) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+      starsHtml += `<span class="star-glyph ${i <= stars ? 'filled' : 'empty'}">${i <= stars ? '★' : '☆'}</span>`;
+    }
+    return `
+      <div class="star-rating-box">
+        <div class="stars-row">${starsHtml}</div>
+        <div class="star-rating-label">${stars} / 5 ດາວ • ${titleText}</div>
+      </div>
+    `;
+  }
+
+  renderMistakeAnalysis(mistypedWords, mistypedChars) {
+    const wordEntries = Object.entries(mistypedWords || {}).sort((a, b) => b[1] - a[1]);
+    const charEntries = Object.entries(mistypedChars || {}).sort((a, b) => b[1] - a[1]);
+
+    let wordsHtml = '';
+    if (wordEntries.length > 0) {
+      wordsHtml = wordEntries.slice(0, 8).map(([word, cnt]) => `
+        <span class="mistake-chip word-chip">
+          <span class="chip-text">${word}</span>
+          <span class="chip-count">${cnt} ເທື່ອ</span>
+        </span>
+      `).join('');
+    } else {
+      wordsHtml = `<span class="chip-perfect">✨ ບໍ່ມີຄຳສັບທີ່ພິມຜິດເລີຍ 100% ຖືກຕ້ອງ!</span>`;
+    }
+
+    let charsHtml = '';
+    if (charEntries.length > 0) {
+      charsHtml = charEntries.slice(0, 8).map(([ch, cnt]) => `
+        <span class="mistake-chip char-chip">
+          <span class="chip-text char-symbol">${ch}</span>
+          <span class="chip-count">${cnt} ເທື່ອ</span>
+        </span>
+      `).join('');
+    } else {
+      charsHtml = `<span class="chip-perfect">✨ ພິມຖືກຕ້ອງທຸກຕົວອັກສອນ!</span>`;
+    }
+
+    return `
+      <div class="mistake-analysis-container">
+        <div class="analysis-block">
+          <div class="analysis-header">❌ ຄຳສັບທີ່ພິມຜິດ:</div>
+          <div class="chips-container">${wordsHtml}</div>
+        </div>
+        <div class="analysis-block">
+          <div class="analysis-header">⚠️ ຕົວອັກສອນທີ່ພິມຜິດຫຼາຍທີ່ສຸດ:</div>
+          <div class="chips-container">${charsHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
   showSpeedResults(stats) {
     const title = document.getElementById('result-title');
     const details = document.getElementById('result-details');
@@ -510,21 +565,39 @@ class PhimLaoApp {
     const bestWpm = Math.max(stats.wpm, parseInt(localStorage.getItem('phimlao_best_wpm') || '0', 10));
     localStorage.setItem('phimlao_best_wpm', bestWpm);
 
+    // ຄຳນວນດາວ 1-5 ດາວ ຈາກ WPM ແລະ ຄວາມຖືກຕ້ອງ
+    const scoreIndex = stats.wpm * (stats.accuracy / 100);
+    let stars = 1;
     let rank = 'ມືໃໝ່ຮຽນພິມ 🌱';
-    if (stats.wpm >= 60) rank = 'ລະດັບເທບພິມໄວ ⚡👑';
-    else if (stats.wpm >= 40) rank = 'ລະດັບມືອາຊີບ 🚀';
-    else if (stats.wpm >= 25) rank = 'ລະດັບປານກາງ 👍';
+
+    if (scoreIndex >= 45 || (stats.wpm >= 55 && stats.accuracy >= 90)) {
+      stars = 5;
+      rank = 'ລະດັບເທບພິມໄວ ⚡👑';
+    } else if (scoreIndex >= 28 || (stats.wpm >= 35 && stats.accuracy >= 85)) {
+      stars = 4;
+      rank = 'ລະດັບມືອາຊີບ 🚀';
+    } else if (scoreIndex >= 18 || (stats.wpm >= 22 && stats.accuracy >= 80)) {
+      stars = 3;
+      rank = 'ລະດັບປານກາງ 👍';
+    } else if (scoreIndex >= 10 || (stats.wpm >= 12 && stats.accuracy >= 70)) {
+      stars = 2;
+      rank = 'ລະດັບພໍໃຊ້ 💪';
+    } else {
+      stars = 1;
+      rank = 'ມືໃໝ່ຮຽນພິມ 🌱';
+    }
 
     if (title) title.textContent = '🎉 ສຳເລັດການທົດສອບຄວາມໄວ!';
     if (details) {
       details.innerHTML = `
-        <div class="result-rank">${rank}</div>
+        ${this.renderStarRating(stars, rank)}
         <div class="result-grid">
           <div class="res-card"><span class="val">${stats.wpm}</span><span class="lbl">WPM (ຄຳ/ນາທີ)</span></div>
           <div class="res-card"><span class="val">${stats.cpm}</span><span class="lbl">CPM (ຕົວອັກສອນ/ນາທີ)</span></div>
           <div class="res-card"><span class="val">${stats.accuracy}%</span><span class="lbl">ຄວາມຖືກຕ້ອງ</span></div>
           <div class="res-card"><span class="val">${bestWpm}</span><span class="lbl">WPM ສູງສຸດຂອງທ່ານ</span></div>
         </div>
+        ${this.renderMistakeAnalysis(stats.mistypedWords, stats.mistypedChars)}
       `;
     }
 
@@ -538,15 +611,36 @@ class PhimLaoApp {
     const bestScore = Math.max(stats.score, parseInt(localStorage.getItem('phimlao_best_arcade') || '0', 10));
     localStorage.setItem('phimlao_best_arcade', bestScore);
 
+    let stars = 1;
+    let rank = 'ມືໃໝ່ຝຶກຍິງ 🌱';
+    if (stats.score >= 1500) {
+      stars = 5;
+      rank = 'ລະດັບເທບຍິງໄວ 💥👑';
+    } else if (stats.score >= 1000) {
+      stars = 4;
+      rank = 'ລະດັບມືປືນອາຊີບ 🎯';
+    } else if (stats.score >= 600) {
+      stars = 3;
+      rank = 'ລະດັບນັກຮົບປານກາງ 🛡️';
+    } else if (stats.score >= 300) {
+      stars = 2;
+      rank = 'ລະດັບຝຶກຫັດ ⚔️';
+    } else {
+      stars = 1;
+      rank = 'ມືໃໝ່ຝຶກຍິງ 🌱';
+    }
+
     if (title) title.textContent = '💥 ຈົບເກມຝົນຄຳສັບ!';
     if (details) {
       details.innerHTML = `
+        ${this.renderStarRating(stars, rank)}
         <div class="result-grid">
           <div class="res-card"><span class="val">${stats.score}</span><span class="lbl">ຄະແນນລວມ</span></div>
           <div class="res-card"><span class="val">${stats.maxCombo}x</span><span class="lbl">ຄອມໂບສູງສຸດ</span></div>
           <div class="res-card"><span class="val">${stats.wordsDestroyed}</span><span class="lbl">ຄຳສັບທີ່ຍິງໄດ້</span></div>
           <div class="res-card"><span class="val">${bestScore}</span><span class="lbl">ຄະແນນສູງສຸດ</span></div>
         </div>
+        ${this.renderMistakeAnalysis(stats.mistypedWords, stats.mistypedChars)}
       `;
     }
 
@@ -557,13 +651,34 @@ class PhimLaoApp {
     const title = document.getElementById('result-title');
     const details = document.getElementById('result-details');
 
+    let stars = 1;
+    let rank = 'ມືໃໝ່ຮຽນແປ້ນພິມ 🌱';
+    if (stats.accuracy >= 98) {
+      stars = 5;
+      rank = 'ນິ້ວມືເທບ 100% 👑';
+    } else if (stats.accuracy >= 92) {
+      stars = 4;
+      rank = 'ນິ້ວມືແມ້ນຢຳສູງ 🎯';
+    } else if (stats.accuracy >= 85) {
+      stars = 3;
+      rank = 'ນິ້ວມືປານກາງ 👍';
+    } else if (stats.accuracy >= 75) {
+      stars = 2;
+      rank = 'ນິ້ວມືພໍໃຊ້ 💪';
+    } else {
+      stars = 1;
+      rank = 'ມືໃໝ່ຮຽນແປ້ນພິມ 🌱';
+    }
+
     if (title) title.textContent = '🌟 ສຳເລັດບົດຝຶກແປ້ນພິມ!';
     if (details) {
       details.innerHTML = `
+        ${this.renderStarRating(stars, rank)}
         <div class="result-grid">
           <div class="res-card"><span class="val">${stats.accuracy}%</span><span class="lbl">ຄວາມຖືກຕ້ອງ</span></div>
           <div class="res-card"><span class="val">${stats.totalTyped}</span><span class="lbl">ຕົວອັກສອນທີ່ພິມ</span></div>
         </div>
+        ${this.renderMistakeAnalysis(stats.mistypedWords, stats.mistypedChars)}
       `;
     }
 

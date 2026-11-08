@@ -17,6 +17,9 @@ class ArcadeGame {
     this.particles = [];
     this.activeWord = null; // ຄຳສັບທີ່ກຳລັງຖືກລັອກເປົ້າໝາຍ
     this.typedLength = 0;
+    this.typedInput = '';
+    this.mistypedWords = {};
+    this.mistypedChars = {};
 
     this.score = 0;
     this.combo = 0;
@@ -71,6 +74,9 @@ class ArcadeGame {
     this.particles = [];
     this.activeWord = null;
     this.typedLength = 0;
+    this.typedInput = '';
+    this.mistypedWords = {};
+    this.mistypedChars = {};
     this.score = 0;
     this.combo = 0;
     this.maxCombo = 0;
@@ -137,38 +143,47 @@ class ArcadeGame {
 
     // ຖ້າຍັງບໍ່ມີຄຳສັບທີ່ຖືກລັອກເປົ້າໝາຍ
     if (!this.activeWord) {
-      // ຊອກຫາຄຳສັບທີ່ຂຶ້ນຕົ້ນດ້ວຍ char ນີ້ (ເລືອກຄຳທີ່ຢູ່ຕ່ຳສຸດກ່ອນ)
-      const candidates = this.words.filter(w => w.text.startsWith(char));
+      // ຊອກຫາຄຳສັບທີ່ຂຶ້ນຕົ້ນດ້ວຍ char ນີ້ ໂດຍໃຊ້ canonicalizeLao
+      const canonChar = canonicalizeLao(char);
+      const candidates = this.words.filter(w => canonicalizeLao(w.text).startsWith(canonChar));
       if (candidates.length > 0) {
         // ເອົາຄຳທີ່ໃກ້ເຖິງພື້ນທີ່ສຸດ
         candidates.sort((a, b) => b.y - a.y);
         this.activeWord = candidates[0];
+        this.typedInput = char;
         this.typedLength = 1;
 
         sounds.playCorrectChar();
         this.createHitParticles(this.activeWord.x, this.activeWord.y);
 
-        if (this.typedLength >= this.activeWord.text.length) {
+        if (canonicalizeLao(this.typedInput) === canonicalizeLao(this.activeWord.text)) {
           this.destroyActiveWord();
         }
       } else {
         sounds.playError();
         this.combo = 0;
+        this.mistypedChars[char] = (this.mistypedChars[char] || 0) + 1;
       }
     } else {
-      // ກວດສອບຕົວອັກສອນຖັດໄປຂອງຄຳສັບທີ່ລັອກໄວ້
-      const expectedChar = this.activeWord.text[this.typedLength];
-      if (char === expectedChar) {
+      // ກວດສອບກັບຄຳສັບທີ່ລັອກໄວ້
+      const nextInput = this.typedInput + char;
+      const targetCanon = canonicalizeLao(this.activeWord.text);
+      const inputCanon = canonicalizeLao(nextInput);
+
+      if (targetCanon.startsWith(inputCanon)) {
+        this.typedInput = nextInput;
         this.typedLength++;
         sounds.playCorrectChar();
         this.createHitParticles(this.activeWord.x, this.activeWord.y);
 
-        if (this.typedLength >= this.activeWord.text.length) {
+        if (inputCanon === targetCanon) {
           this.destroyActiveWord();
         }
       } else {
         sounds.playError();
         this.combo = 0;
+        this.mistypedChars[char] = (this.mistypedChars[char] || 0) + 1;
+        this.mistypedWords[this.activeWord.text] = (this.mistypedWords[this.activeWord.text] || 0) + 1;
       }
     }
 
@@ -203,6 +218,7 @@ class ArcadeGame {
     this.words = this.words.filter(w => w !== this.activeWord);
     this.activeWord = null;
     this.typedLength = 0;
+    this.typedInput = '';
   }
 
   createHitParticles(x, y) {
@@ -339,30 +355,22 @@ class ArcadeGame {
       }
 
       // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳ 100% ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
-      if (isTargeted && this.typedLength > 0) {
-        // 1. ແຕ້ມຂໍ້ຄວາມເຕັມຄຳດ້ວຍສີເທົາ/ຟ້າ (ຊັ້ນພື້ນຫຼັງ)
-        this.ctx.fillStyle = '#64748b';
+      if (isTargeted) {
+        // ແຕ້ມແຖບເສັ້ນຄວາມຄືບໜ້າການພິມຢູ່ກ້ອງຄຳສັບ (Neon Green Bar)
+        const typedLen = canonicalizeLao(this.typedInput || '').length;
+        const totalLen = canonicalizeLao(w.text).length;
+        const progressRatio = typedLen > 0 ? Math.min(1, Math.max(0.1, typedLen / totalLen)) : 0;
+
+        if (progressRatio > 0) {
+          this.ctx.fillStyle = '#22c55e';
+          this.ctx.fillRect(w.x, w.y + 6, w.width * progressRatio, 3.5);
+        }
+
+        // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳດ້ວຍສີຟ້າສົດໃສ ບໍ່ຕັດແຍກສະຫຼະ
+        this.ctx.fillStyle = '#38bdf8';
         this.ctx.fillText(w.text, w.x, w.y);
-
-        // 2. ໃຊ້ Canvas Clipping Mask ເພື່ອແຕ້ມສີຂຽວສະເພາະສ່ວນທີ່ພິມຖືກ (ໂດຍບໍ່ຕັດແຍກສະຫຼະ)
-        const progressRatio = Math.min(1, this.typedLength / w.text.length);
-        const highlightWidth = (w.width + 8) * progressRatio;
-
-        this.ctx.save();
-        this.ctx.beginPath();
-        this.ctx.rect(w.x - 4, w.y - fontSize - 6, highlightWidth, fontSize + 20);
-        this.ctx.clip();
-
-        // ແຕ້ມຂໍ້ຄວາມເຕັມຄຳຄືນໃໝ່ດ້ວຍສີຂຽວ
-        this.ctx.fillStyle = '#34d399';
-        this.ctx.fillText(w.text, w.x, w.y);
-        this.ctx.restore();
-
-        // 3. ແຕ້ມແຖບເສັ້ນຄວາມຄືບໜ້າການພິມຢູ່ກ້ອງຄຳສັບ
-        this.ctx.fillStyle = '#34d399';
-        this.ctx.fillRect(w.x, w.y + 6, w.width * progressRatio, 3);
       } else {
-        this.ctx.fillStyle = isTargeted ? '#38bdf8' : '#f8fafc';
+        this.ctx.fillStyle = '#f8fafc';
         this.ctx.fillText(w.text, w.x, w.y);
       }
     }
@@ -395,7 +403,9 @@ class ArcadeGame {
       lives: this.lives,
       maxLives: this.maxLives,
       level: this.level,
-      wordsDestroyed: this.wordsDestroyed
+      wordsDestroyed: this.wordsDestroyed,
+      mistypedWords: this.mistypedWords,
+      mistypedChars: this.mistypedChars
     };
   }
 }

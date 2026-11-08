@@ -29,6 +29,8 @@ class SpeedTestGame {
     this.totalTypedChars = 0;
     this.correctChars = 0;
     this.errorChars = 0;
+    this.mistypedWords = {};
+    this.mistypedChars = {};
   }
 
   init() {
@@ -62,6 +64,8 @@ class SpeedTestGame {
     this.totalTypedChars = 0;
     this.correctChars = 0;
     this.errorChars = 0;
+    this.mistypedWords = {};
+    this.mistypedChars = {};
     this.timeLeft = this.options.timeLimit;
 
     this.generateWords();
@@ -132,7 +136,8 @@ class SpeedTestGame {
     const normalizedInput = this.currentInput.normalize('NFC').trim();
     const normalizedTarget = currentWord.normalize('NFC').trim();
 
-    const isWordCorrect = (normalizedInput === normalizedTarget);
+    // ປຽບທຽບດ້ວຍ canonicalizeLao ເພື່ອຮອງຮັບ ໝ<->ຫມ, ໜ<->ຫນ, ຫຼ<->ຫລ, ສະຫຼະ-ວັນນະຍຸດ
+    const isWordCorrect = (canonicalizeLao(normalizedInput) === canonicalizeLao(normalizedTarget));
     this.history.push({
       expected: normalizedTarget,
       typed: normalizedInput,
@@ -149,6 +154,7 @@ class SpeedTestGame {
       } else {
         currentWordEl.classList.add('word-incorrect');
         this.errorChars += Math.max(1, Math.abs(normalizedTarget.length - normalizedInput.length));
+        this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;
         sounds.playError();
       }
     }
@@ -223,13 +229,18 @@ class SpeedTestGame {
     const normalizedInput = this.currentInput.normalize('NFC');
     const normalizedTarget = currentWord.normalize('NFC');
 
-    // ກວດສອບວ່າພິມຖືກຕ້ອງຕາມລຳດັບຫຼືບໍ່
-    if (normalizedTarget.startsWith(normalizedInput)) {
+    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ canonicalizeLao
+    const canonTarget = canonicalizeLao(normalizedTarget);
+    const canonInput = canonicalizeLao(normalizedInput);
+
+    if (canonTarget.startsWith(canonInput)) {
       this.correctChars++;
       sounds.playCorrectChar();
     } else {
       this.errorChars++;
       sounds.playError();
+      this.mistypedChars[char] = (this.mistypedChars[char] || 0) + 1;
+      this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;
     }
 
     this.renderWord(this.currentWordIdx);
@@ -258,7 +269,9 @@ class SpeedTestGame {
       currentWord: this.currentWordIdx + 1,
       totalWords: this.options.mode === 'words' ? this.options.wordLimit : this.wordsList.length,
       correctChars: this.correctChars,
-      errorChars: this.errorChars
+      errorChars: this.errorChars,
+      mistypedWords: this.mistypedWords,
+      mistypedChars: this.mistypedChars
     };
   }
 
@@ -324,26 +337,28 @@ class SpeedTestGame {
 
     if (input.length === 0) {
       if (overlayEl) {
-        overlayEl.textContent = '';
+        overlayEl.innerHTML = (wordIdx === this.currentWordIdx) ? '<span class="word-caret"></span>' : '';
         overlayEl.className = 'word-overlay';
       }
       return;
     }
 
-    // ກວດສອບຄວາມຖືກຕ້ອງ
-    const isPrefixMatch = targetWord.startsWith(input);
+    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ canonicalizeLao
+    const canonTarget = canonicalizeLao(targetWord);
+    const canonInput = canonicalizeLao(input);
+    const isPrefixMatch = canonTarget.startsWith(canonInput);
 
     if (isPrefixMatch) {
-      // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100%
+      // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100% ພ້ອມ Caret ຊີ້ບອກຕຳແໜ່ງ
       if (overlayEl) {
-        overlayEl.textContent = input;
+        overlayEl.innerHTML = `${input}<span class="word-caret"></span>`;
         overlayEl.className = 'word-overlay match';
       }
     } else {
       // ພິມຜິດ -> ຂຶ້ນສີແດງເຕືອນ
       wordEl.classList.add('has-error');
       if (overlayEl) {
-        overlayEl.textContent = input;
+        overlayEl.innerHTML = `${input}<span class="word-caret error-caret"></span>`;
         overlayEl.className = 'word-overlay error';
       }
     }

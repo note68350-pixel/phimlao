@@ -395,6 +395,20 @@ function isValidLaoChar(char) {
   return false;
 }
 
+// ປັບຮູບແບບຂໍ້ຄວາມພາສາລາວໃຫ້ເປັນມາດຕະຖານດຽວກັນ (Canonical Lao Normalization)
+// ແຍກ/ແປງຕົວປະສົມ: ໝ <-> ຫມ, ໜ <-> ຫນ, ຫຼ <-> ຫລ, ຼ <-> ລ
+// ແລະ ຈັດລຽງລຳດັບ: ພະຍັນຊະນະ -> ສະຫຼະ -> ວັນນະຍຸດ ປ້ອງກັນພິມສະຫຼະ/ວັນນະຍຸດກ່ອນ-ຫຼັງ
+function canonicalizeLao(str) {
+  if (!str) return '';
+  let s = str.normalize('NFC');
+  s = s.replace(/ໝ/g, 'ຫມ');
+  s = s.replace(/ໜ/g, 'ຫນ');
+  s = s.replace(/ຫຼ/g, 'ຫລ');
+  s = s.replace(/\u0EBC/g, 'ລ'); // ຼ
+  s = s.replace(new RegExp('([\u0EC8-\u0ECC])([\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD\u0EB2\u0EB3])', 'g'), '$2$1');
+  return s;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar };
+  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao };
 }

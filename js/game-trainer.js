@@ -17,6 +17,8 @@ class KeyboardTrainer {
     this.totalTyped = 0;
     this.correctCount = 0;
     this.errorCount = 0;
+    this.mistypedWords = {};
+    this.mistypedChars = {};
 
     this.activeKeyElement = null;
     this.activeShiftElement = null;
@@ -39,6 +41,8 @@ class KeyboardTrainer {
     this.totalTyped = 0;
     this.correctCount = 0;
     this.errorCount = 0;
+    this.mistypedWords = {};
+    this.mistypedChars = {};
 
     this.updateTarget();
   }
@@ -98,7 +102,8 @@ class KeyboardTrainer {
     const normInput = char.normalize('NFC');
     const normTarget = target.char.normalize('NFC');
 
-    if (normInput === normTarget) {
+    // ປຽບທຽບດ້ວຍ canonicalizeLao
+    if (normInput === normTarget || canonicalizeLao(normInput) === canonicalizeLao(normTarget)) {
       this.correctCount++;
       sounds.playCorrectChar();
       this.charIdx++;
@@ -112,10 +117,7 @@ class KeyboardTrainer {
         if (this.wordIdx >= this.currentList.length) {
           sounds.playGameOver(true);
           if (this.options.onComplete) {
-            this.options.onComplete({
-              totalTyped: this.totalTyped,
-              accuracy: Math.round((this.correctCount / this.totalTyped) * 100)
-            });
+            this.options.onComplete(this.getStats());
           }
           return;
         }
@@ -126,6 +128,8 @@ class KeyboardTrainer {
       this.errorCount++;
       sounds.playError();
       this.flashErrorKey();
+      this.mistypedChars[char] = (this.mistypedChars[char] || 0) + 1;
+      this.mistypedWords[target.word] = (this.mistypedWords[target.word] || 0) + 1;
     }
 
     if (this.options.onProgress) {
@@ -218,7 +222,9 @@ class KeyboardTrainer {
       wordProgress: `${this.wordIdx + 1} / ${this.currentList.length}`,
       accuracy: accuracy,
       totalTyped: this.totalTyped,
-      errors: this.errorCount
+      errors: this.errorCount,
+      mistypedWords: this.mistypedWords,
+      mistypedChars: this.mistypedChars
     };
   }
 }

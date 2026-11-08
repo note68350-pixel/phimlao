@@ -366,19 +366,43 @@ class PhimLaoApp {
     }
 
     let char = e.key;
+    const isShift = e.shiftKey || this.isShiftActive;
 
-    // ຖ້າບໍ່ແມ່ນຕົວອັກສອນລາວແທ້ (ກົດປຸ່ມ QWERTY ອັງກິດ) ໃຫ້ແປງເປັນພາສາລາວອັດຕະໂນມັດ ເມື່ອເປີດ autoTranslateLao
-    if (!isNativeLaoChar(char)) {
-      if (this.autoTranslateLao) {
-        const translated = translatePhysicalKeyToLao(e.code, e.shiftKey || this.isShiftActive);
-        if (translated) {
-          char = translated;
+    // 1. ແປງລະຫັດ PUA ຈາກ Windows kbdlao.dll (U+F001 - U+F008) ເປັນຕົວອັກສອນລາວມາດຕະຖານ
+    const PUA_TO_LAO = {
+      '\uF001': 'ັ້',
+      '\uF002': 'ຫຼ',
+      '\uF003': 'ົ້',
+      '\uF004': 'ໍ່',
+      '\uF005': 'ື້',
+      '\uF006': 'ີ້',
+      '\uF007': 'ິ້',
+      '\uF008': 'ຶ້'
+    };
+    if (PUA_TO_LAO[char]) {
+      char = PUA_TO_LAO[char];
+    }
+
+    // 2. ຖ້າເປີດ autoTranslateLao:
+    // ໃຫ້ແປງ e.code ຕາມຜັງແປ້ນພິມລາວໂດຍກົງສະເໝີ ເພື່ອໃຫ້ຮອງຮັບທັງ Normal ແລະ Shift 100% ຖືກຕ້ອງ
+    if (this.autoTranslateLao) {
+      const translated = translatePhysicalKeyToLao(e.code, isShift);
+      if (translated) {
+        char = translated;
+      }
+    } else {
+      // 3. ຖ້າປິດ autoTranslateLao (ໂໝດຕາມລະບົບ):
+      // ຫາກກົດ Shift ຄ້າງໄວ້ ແຕ່ລະບົບ OS ສົ່ງຕົວປົກກະຕິທີ່ບໍ່ໄດ້ Shift ມາ (ເຊັ່ນ ລ ແທນ ຫຼ, ຫຼື ົ ແທນ ົ້)
+      if (isShift && LAO_KEYBOARD_LAYOUT[e.code]) {
+        const layout = LAO_KEYBOARD_LAYOUT[e.code];
+        if (char === layout.normal && layout.shift && layout.shift !== layout.normal) {
+          char = layout.shift;
         }
       }
     }
 
     // ຖ້າເປັນຕົວອັກສອນລາວ ຫຼື ຕົວອັກສອນທີ່ຮອງຮັບ (ຮອງຮັບທັງຕົວດ່ຽວ ແລະ ຕົວປະສົມ shift ເຊັ່ນ ຫຼ, ົ້, ິ້)
-    if (char && (isValidLaoChar(char[0]) || char === 'ຫຼ')) {
+    if (char && (isValidLaoChar(char[0]) || char === 'ຫຼ' || isNativeLaoChar(char))) {
       e.preventDefault();
       this.lastProcessedTime = Date.now();
       this.routeCharacterInput(char);
@@ -398,6 +422,11 @@ class PhimLaoApp {
   handleVirtualKeyPress(keyInfo) {
     sounds.playKeyClick();
     const char = this.isShiftActive ? keyInfo.shift : keyInfo.normal;
+
+    // ຖ້າກົດປຸ່ມເທິງ virtual keyboard ຂະນະທີ່ Shift active ຢູ່ ໃຫ້ປິດ Shift mode ທັນທີຫຼັງກົດ
+    if (this.isShiftActive) {
+      this.setShiftState(false);
+    }
 
     if (char === 'Bksp') {
       if (this.currentMode === 'speed') {
@@ -421,16 +450,12 @@ class PhimLaoApp {
 
   routeCharacterInput(char) {
     if (!char) return;
-    // ຮອງຮັບຕົວອັກສອນປະສົມເຊັ່ນ ຫຼ, ົ້, ິ້, ີ້
-    for (let i = 0; i < char.length; i++) {
-      const ch = char[i];
-      if (this.currentMode === 'speed') {
-        this.speedGame.handleInput(ch);
-      } else if (this.currentMode === 'arcade') {
-        this.arcadeGame.handleInput(ch);
-      } else if (this.currentMode === 'trainer') {
-        this.trainerGame.handleInput(ch);
-      }
+    if (this.currentMode === 'speed') {
+      this.speedGame.handleInput(char);
+    } else if (this.currentMode === 'arcade') {
+      this.arcadeGame.handleInput(char);
+    } else if (this.currentMode === 'trainer') {
+      this.trainerGame.handleInput(char);
     }
   }
 

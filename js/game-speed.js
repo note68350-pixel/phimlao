@@ -247,22 +247,23 @@ class SpeedTestGame {
     }
 
     // ກໍລະນີພິມຕົວອັກສອນ
-    this.totalTypedChars++;
+    const charLen = char.length || 1;
+    this.totalTypedChars += charLen;
     this.currentInput += char;
 
     const normalizedInput = this.currentInput.normalize('NFC');
     const normalizedTarget = currentWord.normalize('NFC');
 
-    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ isLaoPrefixMatch (ຮອງຮັບທັງ ນ້ຳ ແລະ ນຳ້, ໝູ ແລະ ຫມູ)
+    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ isLaoPrefixMatch (ຮອງຮັບທັງ ນ້ຳ ແລະ ນຳ້, ໝູ ແລະ ຫມູ, ຫຼ ແລະ ຫລ)
     const isPrefixMatch = (typeof isLaoPrefixMatch === 'function')
       ? isLaoPrefixMatch(normalizedTarget, normalizedInput)
       : canonicalizeLao(normalizedTarget).startsWith(canonicalizeLao(normalizedInput));
 
     if (isPrefixMatch) {
-      this.correctChars++;
+      this.correctChars += charLen;
       sounds.playCorrectChar();
     } else {
-      this.errorChars++;
+      this.errorChars += charLen;
       sounds.playError();
       this.mistypedChars[char] = (this.mistypedChars[char] || 0) + 1;
       this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;

@@ -60,10 +60,24 @@ class KeyboardTrainer {
     const wordObj = this.currentList[this.wordIdx];
     if (!wordObj) return null;
     const word = wordObj.word.normalize('NFC');
-    const targetChar = this.pendingSwapChar ? this.pendingSwapChar : word[this.charIdx];
+
+    let targetChar = '';
+    let targetLen = 1;
+    if (this.pendingSwapChar) {
+      targetChar = this.pendingSwapChar;
+      targetLen = targetChar.length;
+    } else if (word.substring(this.charIdx, this.charIdx + 2) === 'ຫຼ') {
+      targetChar = 'ຫຼ';
+      targetLen = 2;
+    } else {
+      targetChar = word[this.charIdx] || '';
+      targetLen = 1;
+    }
+
     return {
       word: word,
       char: targetChar,
+      charLen: targetLen,
       charIdx: this.charIdx,
       hint: wordObj.hint || '',
       category: wordObj.category || ''
@@ -99,7 +113,12 @@ class KeyboardTrainer {
   handleBackspace() {
     this.pendingSwapChar = null;
     if (this.charIdx > 0) {
-      this.charIdx--;
+      const word = (this.currentList[this.wordIdx] && this.currentList[this.wordIdx].word) || '';
+      if (this.charIdx >= 2 && word.substring(this.charIdx - 2, this.charIdx) === 'ຫຼ') {
+        this.charIdx -= 2;
+      } else {
+        this.charIdx--;
+      }
       this.updateTarget();
       sounds.playKeyClick();
     }
@@ -117,8 +136,18 @@ class KeyboardTrainer {
 
     let isMatch = false;
 
+    // 0. ກໍລະນີ target ແມ່ນ ຫຼ (ຫຼື ຜູ້ໃຊ້ພິມ ຫຼ):
+    if (normTarget === 'ຫຼ') {
+      if (normInput === 'ຫຼ' || canonicalizeLao(normInput) === 'ຫລ') {
+        isMatch = true;
+        this.charIdx += 2;
+      } else if (normInput === 'ຫ') {
+        isMatch = true;
+        this.pendingSwapChar = 'ລ';
+      }
+    }
     // 1. ກວດສອບຖ້າມີ pendingSwapChar (ຜູ້ໃຊ້ພິມສະຫຼະ/ວັນນະຍຸດສະຫຼັບລຳດັບ)
-    if (this.pendingSwapChar) {
+    else if (this.pendingSwapChar) {
       if (normInput === this.pendingSwapChar || canonicalizeLao(normInput) === canonicalizeLao(this.pendingSwapChar)) {
         isMatch = true;
         this.pendingSwapChar = null;
@@ -128,8 +157,13 @@ class KeyboardTrainer {
     // 2. ກວດສອບຕົກກັບຕົວອັກສອນເປົ້າໝາຍປົກກະຕິ
     else if (normInput === normTarget || canonicalizeLao(normInput) === canonicalizeLao(normTarget)) {
       isMatch = true;
-      this.charIdx++;
-    } 
+      this.charIdx += target.charLen || 1;
+    }
+    // 2.1 ກໍລະນີຜູ້ໃຊ້ພິມຕົວປະສົມສະຫຼະ-ວັນນະຍຸດ (ເຊັ່ນ ົ້, ັ້, ິ້, ີ້) ທີ່ກົງກັບ 2 ຕົວອັກສອນຖັດໄປ
+    else if (this.charIdx + 1 < word.length && (normInput === word.substring(this.charIdx, this.charIdx + 2) || canonicalizeLao(normInput) === canonicalizeLao(word.substring(this.charIdx, this.charIdx + 2)))) {
+      isMatch = true;
+      this.charIdx += 2;
+    }
     // 3. ກວດສອບກໍລະນີຜູ້ໃຊ້ພິມ ວັນນະຍຸດ/ສະຫຼະ ສະຫຼັບກັນ (ເຊັ່ນ ພິມ ຳ ກ່ອນ ້ ຫຼື ້ ກ່ອນ ຳ)
     else if (this.charIdx + 1 < word.length) {
       const nextChar = word[this.charIdx + 1].normalize('NFC');
@@ -151,9 +185,6 @@ class KeyboardTrainer {
     } else if (normTarget === 'ໜ' && normInput === 'ຫ') {
       isMatch = true;
       this.pendingSwapChar = 'ນ';
-    } else if (normTarget === 'ຫຼ' && normInput === 'ຫ') {
-      isMatch = true;
-      this.pendingSwapChar = 'ລ';
     }
 
     if (isMatch) {

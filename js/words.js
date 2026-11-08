@@ -530,10 +530,122 @@ function normalizeIncomingChar(char) {
   return s;
 }
 
+function getLaoGraphemeClusters(str) {
+  if (!str) return [];
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter('lo', { granularity: 'grapheme' });
+    return [...segmenter.segment(str)].map(s => s.segment);
+  }
+  return str.match(/[\u0E80-\u0EAE\u0EDC\u0EDD][\u0EBC]?[\u0EB1\u0EB4-\u0EB9\u0EBB\u0ECD]*[\u0EC8-\u0ECC]*|./gu) || str.split('');
+}
+
+/**
+ * ຊອກຫາສ່ວນນຳໜ້າຂອງຄຳສັບເປົ້າໝາຍທີ່ພິມຄົບ Cluster ແລ້ວ ເພື່ອບໍ່ໃຫ້ສະຫຼະເທິງ/ລຸ່ມ (ເຊັ່ນ ີ, ິ, ັ, ້) ຫຼຸດແຍກອອກຈາກພະຍັນຊະນະ
+ */
+function getCompletedClusterPrefix(targetWord, typedInput) {
+  if (!typedInput || !targetWord) return { matched: '', remaining: targetWord };
+  const clusters = getLaoGraphemeClusters(targetWord);
+  let matched = '';
+  const canonInput = canonicalizeLao(typedInput);
+
+  for (let i = 0; i < clusters.length; i++) {
+    const candidate = matched + clusters[i];
+    if (canonInput.startsWith(canonicalizeLao(candidate))) {
+      matched = candidate;
+    } else {
+      break;
+    }
+  }
+  const remaining = targetWord.substring(matched.length);
+  return { matched, remaining };
+}
+
+const LAO_COMBINING_MARKS = new Set([
+  '\u0EB1', '\u0EB4', '\u0EB5', '\u0EB6', '\u0EB7', '\u0EB8', '\u0EB9', '\u0EBB',
+  '\u0EBC', '\u0ECD', '\u0EC8', '\u0EC9', '\u0ECA', '\u0ECB', '\u0ECC'
+]);
+
+/**
+ * ສ້າງ HTML ຈັດຮູບແບບຄຳສັບປັດຈຸບັນທີ່ກຳລັງພິມ ໂດຍບໍ່ໃຫ້ສະຫຼະເທິງ/ລຸ່ມ (ເຊັ່ນ ີ, ິ, ັ, ້) ຫຼຸດແຍກ ຫຼື ເລີຍຂອບອອກມາ
+ */
+function formatLaoActiveWordHtml(targetWord, input) {
+  if (!input) {
+    return {
+      html: `<span class="word-caret"></span><span class="char-pending">${targetWord}</span>`,
+      isError: false
+    };
+  }
+
+  const isMatch = (typeof isLaoPrefixMatch === 'function')
+    ? isLaoPrefixMatch(targetWord, input)
+    : canonicalizeLao(targetWord).startsWith(canonicalizeLao(input));
+
+  if (isMatch) {
+    const matched = (typeof getMatchedTargetPrefix === 'function')
+      ? getMatchedTargetPrefix(targetWord, input)
+      : input;
+    const remaining = targetWord.substring(matched.length);
+    let marks = '';
+    let idx = 0;
+    while (idx < remaining.length && LAO_COMBINING_MARKS.has(remaining[idx])) {
+      marks += remaining[idx];
+      idx++;
+    }
+    const rest = remaining.substring(idx);
+
+    if (marks) {
+      return {
+        html: `<span class="char-correct">${matched}<span class="vowel-dim">${marks}</span></span><span class="word-caret"></span><span class="char-pending">${rest}</span>`,
+        isError: false
+      };
+    } else {
+      return {
+        html: `<span class="char-correct">${matched}</span><span class="word-caret"></span><span class="char-pending">${rest}</span>`,
+        isError: false
+      };
+    }
+  }
+
+  // ພິມຜິດ (Error)
+  let matched = '';
+  let wrong = input;
+  for (let i = input.length - 1; i >= 1; i--) {
+    const sub = input.substring(0, i);
+    if (typeof isLaoPrefixMatch === 'function' && isLaoPrefixMatch(targetWord, sub)) {
+      matched = (typeof getMatchedTargetPrefix === 'function')
+        ? getMatchedTargetPrefix(targetWord, sub)
+        : sub;
+      wrong = input.substring(matched.length);
+      break;
+    }
+  }
+  const remaining = targetWord.substring(matched.length);
+  return {
+    html: `<span class="char-correct">${matched}</span><span class="char-err">${wrong}</span><span class="word-caret error-caret"></span><span class="char-pending">${remaining}</span>`,
+    isError: true
+  };
+}
+
 if (typeof window !== 'undefined') {
   window.normalizeIncomingChar = normalizeIncomingChar;
+  window.getLaoGraphemeClusters = getLaoGraphemeClusters;
+  window.getCompletedClusterPrefix = getCompletedClusterPrefix;
+  window.formatLaoActiveWordHtml = formatLaoActiveWordHtml;
+  window.LAO_COMBINING_MARKS = LAO_COMBINING_MARKS;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, isLaoPrefixMatch, getMatchedTargetPrefix, normalizeIncomingChar };
+  module.exports = {
+    LAO_WORDS,
+    isNativeLaoChar,
+    isValidLaoChar,
+    canonicalizeLao,
+    isLaoPrefixMatch,
+    getMatchedTargetPrefix,
+    normalizeIncomingChar,
+    getLaoGraphemeClusters,
+    getCompletedClusterPrefix,
+    formatLaoActiveWordHtml,
+    LAO_COMBINING_MARKS
+  };
 }

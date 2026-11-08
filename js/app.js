@@ -10,12 +10,8 @@ class PhimLaoApp {
     this.difficulty = 'easy';
     this.autoTranslateLao = true; // ເປີດແປງປຸ່ມ QWERTY -> ລາວ ອັດຕະໂນມັດເປັນຄ່າເລີ່ມຕົ້ນ
 
-    // ກວດສອບອຸປະກອນມືຖື: ຫາກເປັນໂທລະສັບມືຖື ໃຫ້ປິດ Virtual Keyboard ເປັນຄ່າເລີ່ມຕົ້ນ ເພື່ອໃຊ້ Gboard/ຄີບອດມືຖື
-    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      || (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024)
-      || window.innerWidth <= 768;
-
-    this.showKeyboard = !this.isMobile;
+    // ເປີດແປ້ນພິມສະເໝືອນທັງໃນຄອມ ແລະ ມືຖື ພ້ອມປັບຂະໜາດໃຫ້ພໍດີກັບຈໍໂທລະສັບ
+    this.showKeyboard = true;
     this.isShiftActive = false; // ສະຖານະການກົດປຸ່ມ Shift
     this.lastProcessedTime = 0; // ປ້ອງກັນການກົດຊ້ຳ 2 ຄັ້ງ (Duplicate Event Guard)
 
@@ -116,7 +112,7 @@ class PhimLaoApp {
           `;
         }
 
-        keyBtn.addEventListener('click', (e) => {
+        const triggerKey = (e) => {
           e.preventDefault();
           if (code === 'ShiftLeft' || code === 'ShiftRight' || code === 'CapsLock') {
             this.setShiftState(!this.isShiftActive);
@@ -127,6 +123,15 @@ class PhimLaoApp {
             normal: layoutInfo.normal || '',
             shift: layoutInfo.shift || ''
           });
+        };
+
+        keyBtn.addEventListener('pointerdown', (e) => {
+          if (e.pointerType === 'touch') {
+            triggerKey(e);
+          }
+        });
+        keyBtn.addEventListener('click', (e) => {
+          triggerKey(e);
         });
 
         rowDiv.appendChild(keyBtn);
@@ -313,6 +318,14 @@ class PhimLaoApp {
         btn.classList.add('active');
         const [mode, val] = btn.dataset.speedSetting.split(':');
         this.speedGame.setMode(mode, parseInt(val, 10));
+      });
+    });
+
+    // Drawer Game Modes
+    document.querySelectorAll('[data-drawer-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.switchMode(btn.dataset.drawerMode);
+        this.closeDrawer();
       });
     });
 
@@ -631,6 +644,13 @@ class PhimLaoApp {
 
     this.currentMode = mode;
     this.clearAllVirtualKeyStates();
+
+    document.querySelectorAll('[data-mode]').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    document.querySelectorAll('[data-drawer-mode]').forEach(b => {
+      b.classList.toggle('active', b.dataset.drawerMode === mode);
+    });
 
     this.speedPanel.style.display = (mode === 'speed') ? 'block' : 'none';
     this.arcadePanel.style.display = (mode === 'arcade') ? 'block' : 'none';

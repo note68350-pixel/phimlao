@@ -179,7 +179,7 @@ class SpeedTestGame {
         this.correctChars += normalizedTarget.length + 1;
         if (baseEl) {
           baseEl.textContent = normalizedTarget;
-          baseEl.style.visibility = 'visible';
+          baseEl.style.display = 'inline-block';
         }
         sounds.playWordComplete();
       } else {
@@ -188,7 +188,7 @@ class SpeedTestGame {
         this.mistypedWords[normalizedTarget] = (this.mistypedWords[normalizedTarget] || 0) + 1;
         if (baseEl) {
           baseEl.textContent = normalizedInput.length > 0 ? normalizedInput : normalizedTarget;
-          baseEl.style.visibility = 'visible';
+          baseEl.style.display = 'inline-block';
         }
         sounds.playError();
       }
@@ -394,18 +394,17 @@ class SpeedTestGame {
       wordEl.style.minWidth = '';
       if (wordIdx === this.currentWordIdx) {
         if (baseEl) {
-          baseEl.textContent = targetWord;
-          baseEl.style.visibility = 'hidden';
+          baseEl.style.display = 'none';
         }
         if (overlayEl) {
-          overlayEl.style.display = 'inline-block';
+          overlayEl.style.display = 'inline-flex';
           overlayEl.innerHTML = `<span class="word-caret"></span><span class="char-pending">${targetWord}</span>`;
           overlayEl.className = 'word-overlay';
         }
       } else {
         if (baseEl) {
           baseEl.textContent = targetWord;
-          baseEl.style.visibility = 'visible';
+          baseEl.style.display = 'inline-block';
         }
         if (overlayEl) {
           overlayEl.style.display = 'none';
@@ -416,66 +415,25 @@ class SpeedTestGame {
       return;
     }
 
-    // ກວດສອບຄວາມຖືກຕ້ອງດ້ວຍ isLaoPrefixMatch
-    const isPrefixMatch = (typeof isLaoPrefixMatch === 'function')
-      ? isLaoPrefixMatch(targetWord, input)
-      : canonicalizeLao(targetWord).startsWith(canonicalizeLao(input));
+    if (baseEl) {
+      baseEl.style.display = 'none';
+    }
 
-    if (isPrefixMatch) {
-      // ພິມຖືກຕ້ອງ -> ສະແດງ Single Layer: ສ່ວນທີ່ພິມຖືກ (ສີຟ້າ) + Caret + ສ່ວນທີ່ຍັງບໍ່ທັນພິມ (ສີເທົາ)
-      wordEl.style.minWidth = '';
-      const matched = (typeof getMatchedTargetPrefix === 'function') 
-        ? getMatchedTargetPrefix(targetWord, input) 
-        : input;
-      const remainingTarget = targetWord.substring(matched.length);
+    const result = (typeof formatLaoActiveWordHtml === 'function')
+      ? formatLaoActiveWordHtml(targetWord, input)
+      : {
+          html: `<span class="char-correct">${input}</span><span class="word-caret"></span><span class="char-pending">${targetWord.substring(input.length)}</span>`,
+          isError: false
+        };
 
-      if (overlayEl) {
-        overlayEl.style.display = 'inline-block';
-        overlayEl.innerHTML = `${matched}<span class="word-caret"></span><span class="char-pending">${remainingTarget}</span>`;
-        overlayEl.className = 'word-overlay match';
-      }
-
-      // ເຊື່ອງ baseEl ທັງໝົດ ເພື່ອປ້ອງກັນບໍ່ໃຫ້ຕົວອັກສອນເກົ່າຊ້ອນທັບ 100% (Single-Layer Zero Collision)
-      if (baseEl) {
-        baseEl.style.visibility = 'hidden';
-      }
-    } else {
-      // ພິມຜິດ -> ແຍກສ່ວນທີ່ພິມຖືກ (ສີຟ້າ) ແລະ ສ່ວນທີ່ພິມຜິດ (ສີແດງ) ຢ່າງຈະແຈ້ງ
-      // ສະແດງທັງໝົດໃນ overlayEl ອັນດຽວ ເພື່ອປ້ອງກັນຕົວອັກສອນຊ້ອນທັບກັນ 100%
+    if (result.isError) {
       wordEl.classList.add('has-error');
+    }
 
-      // ຊອກຫາສ່ວນນຳໜ້າທີ່ພິມຖືກຕ້ອງຍາວທີ່ສຸດ
-      let matched = '';
-      let wrong = input;
-      for (let i = input.length - 1; i >= 1; i--) {
-        const sub = input.substring(0, i);
-        if (typeof isLaoPrefixMatch === 'function' && isLaoPrefixMatch(targetWord, sub)) {
-          matched = (typeof getMatchedTargetPrefix === 'function')
-            ? getMatchedTargetPrefix(targetWord, sub)
-            : sub;
-          wrong = input.substring(i);
-          break;
-        }
-      }
-
-      // ສ່ວນທີ່ເຫຼືອຂອງຄຳສັບເປົ້າໝາຍທີ່ຍັງບໍ່ທັນພິມ
-      const remainingTarget = targetWord.substring(matched.length);
-
-      if (overlayEl) {
-        overlayEl.style.display = 'inline-block';
-        overlayEl.innerHTML = `${matched}<span class="char-err">${wrong}</span><span class="word-caret error-caret"></span><span class="char-pending">${remainingTarget}</span>`;
-        overlayEl.className = 'word-overlay error';
-
-        // ປັບຂະໜາດກ່ອງໃຫ້ພໍດີກັບຕົວອັກສອນທີ່ພິມຜິດ ບໍ່ໃຫ້ລົ້ນກ່ອງ
-        if (overlayEl.scrollWidth > wordEl.clientWidth - 10) {
-          wordEl.style.minWidth = `${overlayEl.scrollWidth + 18}px`;
-        }
-      }
-
-      // ເຊື່ອງ baseEl ທັງໝົດໃນຂະນະພິມຜິດ ເພື່ອປ້ອງກັນບໍ່ໃຫ້ຕົວອັກສອນເກົ່າຊ້ອນທັບ (Zero Collision)
-      if (baseEl) {
-        baseEl.style.visibility = 'hidden';
-      }
+    if (overlayEl) {
+      overlayEl.style.display = 'inline-flex';
+      overlayEl.innerHTML = result.html;
+      overlayEl.className = `word-overlay ${result.isError ? 'error' : 'match'}`;
     }
   }
 

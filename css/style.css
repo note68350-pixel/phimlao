@@ -369,16 +369,19 @@ header {
 
 .speed-word .word-overlay {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
-  position: absolute;
-  top: 0.25rem;
-  left: 0.55rem;
+  display: inline-flex;
+  align-items: center;
   font-size: 1.65rem;
   line-height: 1.6;
-  color: var(--text-main);
-  display: inline-block;
   letter-spacing: normal !important;
   pointer-events: none;
-  white-space: nowrap;
+  white-space: nowrap !important;
+}
+
+.speed-word .char-correct {
+  color: #38bdf8 !important;
+  font-weight: 600;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
 }
 
 .speed-word .word-overlay.match {
@@ -408,13 +411,20 @@ header {
   text-shadow: none !important;
 }
 
+.speed-word .vowel-dim {
+  color: #64748b !important;
+  font-weight: normal !important;
+  text-shadow: none !important;
+  opacity: 0.75;
+}
+
 .word-caret {
   display: inline-block;
   width: 2.5px;
-  height: 1.1rem;
+  height: 1.25rem;
   background-color: #38bdf8;
-  margin-left: 1px;
-  vertical-align: -0.2rem;
+  margin: 0 1.5px;
+  vertical-align: middle;
   border-radius: 1px;
   box-shadow: 0 0 6px #38bdf8;
   animation: blinkCaret 0.85s infinite;
@@ -1169,6 +1179,37 @@ footer p {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
 }
 
+.drawer-mode-group {
+  display: flex;
+  width: 100%;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+}
+
+.drawer-mode-btn {
+  flex: 1;
+  padding: 0.5rem 0.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: rgba(30, 41, 59, 0.6);
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.drawer-mode-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
 .drawer-difficulty-group {
   display: flex;
   width: 100%;
@@ -1225,6 +1266,15 @@ footer p {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.drawer-footer-badge {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  padding: 0.75rem 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+}
+
 /* Drawer Toggle Button in Header */
 .btn-drawer-toggle {
   display: inline-flex;
@@ -1256,8 +1306,28 @@ footer p {
    Responsive Breakpoints
    ======================================================== */
 @media (max-width: 768px) {
+  /* Lock full screen viewport without any scrolling or jumping */
+  html, body {
+    height: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    overscroll-behavior: none !important;
+    -webkit-overflow-scrolling: auto !important;
+    touch-action: manipulation;
+  }
+
+  body {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+
   header {
-    padding: 0.35rem 0.5rem;
+    padding: 0.35rem 0.5rem !important;
+    flex-shrink: 0;
   }
 
   .header-content {
@@ -1266,22 +1336,19 @@ footer p {
 
   /* Compact Brand on mobile so it never blocks the game */
   .brand-logo {
-    font-size: 1.3rem;
-    padding: 0.35rem;
-    border-radius: 8px;
+    font-size: 1.1rem !important;
+    padding: 0.2rem 0.35rem !important;
+    border-radius: 6px !important;
   }
 
   .brand-title {
-    font-size: 1.1rem;
-  }
-
-  .brand-badge {
-    font-size: 0.65rem;
-    padding: 0.1rem 0.35rem;
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
   }
 
   #top-wpm-badge {
-    font-size: 0.7rem !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
   }
 
   /* Hide the 3 large cluttered pills on mobile; accessible inside the slide-out drawer */
@@ -1293,103 +1360,174 @@ footer p {
 
   .btn-drawer-toggle {
     display: inline-flex !important;
-    padding: 0.35rem 0.7rem;
-    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem !important;
+    font-size: 0.8rem !important;
   }
 
   main.container {
-    padding: 0.5rem 0.65rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    padding: 0.35rem 0.5rem !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
   }
 
-  /* Compact Control Bar on mobile */
+  /* Compact Control Bar on mobile - Mode & Difficulty in drawer */
   .control-bar {
-    padding: 0.4rem 0.6rem;
-    margin-bottom: 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .tab-group {
-    width: 100%;
-    justify-content: space-around;
-  }
-
-  .tab-btn {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.8rem;
-  }
-
-  .difficulty-group {
-    display: none; /* Accessible in the drawer on mobile */
+    display: none !important;
   }
 
   .stats-bar {
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.5rem;
-    gap: 0.85rem;
+    padding: 0.35rem 0.5rem !important;
+    margin-bottom: 0.35rem !important;
+    gap: 0.5rem !important;
+    flex-shrink: 0;
   }
 
   .stat-item .val {
-    font-size: 1.4rem;
+    font-size: 1.25rem !important;
   }
 
   .stat-item .lbl {
-    font-size: 0.7rem;
+    font-size: 0.65rem !important;
   }
 
   .speed-options-bar {
-    margin-bottom: 0.5rem;
-    gap: 0.35rem;
+    margin-bottom: 0.35rem !important;
+    gap: 0.3rem !important;
+    flex-shrink: 0;
   }
 
   .speed-opt-btn {
-    padding: 0.25rem 0.55rem;
-    font-size: 0.8rem;
+    padding: 0.2rem 0.45rem !important;
+    font-size: 0.75rem !important;
   }
 
   /* Compact word stream to fit cleanly above phone virtual keyboard */
   .speed-words-wrapper {
-    height: 105px !important;
-    padding: 0.5rem 0.75rem;
-    font-size: 1.35rem;
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
+    height: 85px !important;
+    max-height: 85px !important;
+    padding: 0.4rem 0.6rem !important;
+    font-size: 1.25rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 0.25rem !important;
+    flex-shrink: 0;
   }
 
   .speed-word {
-    padding: 0.15rem 0.45rem;
-    margin: 0.15rem 0.25rem;
+    padding: 0.15rem 0.4rem !important;
+    margin: 0.15rem 0.2rem !important;
   }
 
   .speed-word .word-base,
   .speed-word .word-overlay {
-    font-size: 1.35rem !important;
+    font-size: 1.25rem !important;
     line-height: 1.5 !important;
   }
 
-  .speed-word .word-overlay {
-    top: 0.15rem;
-    left: 0.45rem;
-  }
-
   .speed-controls {
-    margin-top: 0.35rem;
+    margin-top: 0.2rem !important;
+    flex-shrink: 0;
   }
 
   .btn-restart-game {
-    padding: 0.35rem 0.85rem;
-    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
   }
 
-  /* Hide in-game virtual keyboard on mobile by default */
+  /* Mobile Virtual Keyboard: Fully visible, responsive, fit within mobile screen */
+  .keyboard-section {
+    width: 100% !important;
+    padding: 0.25rem 0 0.4rem 0 !important;
+    margin-top: auto !important;
+    flex-shrink: 0;
+  }
+
   .keyboard-container {
-    display: none;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    padding: 5px 3px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    touch-action: manipulation !important;
+  }
+
+  .kb-row {
+    display: flex !important;
+    gap: 2.5px !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .key {
+    height: 34px !important;
+    padding: 2px 1px !important;
+    border-radius: 6px !important;
+    border-width: 1px !important;
+    touch-action: manipulation !important;
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+  }
+
+  .key-normal {
+    font-size: 0.95rem !important;
+    line-height: 1 !important;
+    font-weight: 600 !important;
+    align-self: center !important;
+  }
+
+  .key-shift {
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+    align-self: flex-end !important;
+    color: #94a3b8 !important;
+    padding-right: 2px !important;
+  }
+
+  .key-qwerty {
+    display: none !important;
+  }
+
+  .key-special {
+    font-size: 0.65rem !important;
+    line-height: 1 !important;
+  }
+
+  .w-backspace { flex: 1.5 1 0px !important; }
+  .w-tab { flex: 1.2 1 0px !important; }
+  .w-caps { flex: 1.3 1 0px !important; }
+  .w-enter { flex: 1.5 1 0px !important; }
+  .w-shift { flex: 1.6 1 0px !important; }
+  .w-space { flex: 5 1 0px !important; max-width: none !important; }
+
+  .finger-legend {
+    display: none !important;
   }
 
   footer {
-    display: none; /* Hide footer on mobile gameplay screen to avoid scrolling */
+    display: none !important;
+  }
+}
+
+@media (max-height: 700px) and (max-width: 768px) {
+  .speed-words-wrapper {
+    height: 70px !important;
+    max-height: 70px !important;
+    font-size: 1.15rem !important;
+  }
+  .key {
+    height: 30px !important;
+  }
+  .key-normal {
+    font-size: 0.85rem !important;
+  }
+  .stats-bar {
+    padding: 0.25rem 0.5rem !important;
+    margin-bottom: 0.25rem !important;
   }
 }

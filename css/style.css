@@ -501,34 +501,33 @@ header {
 
 .trainer-word-display {
   font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
-  position: relative;
   display: inline-block;
   font-size: 3.5rem;
   font-weight: 700;
   line-height: 1.4;
   margin-bottom: 0.5rem;
   letter-spacing: normal !important;
+  white-space: nowrap !important;
 }
 
-.trainer-word-base {
-  color: var(--text-sub);
-  display: inline-block;
-  letter-spacing: normal !important;
-}
-
-.trainer-word-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+.trainer-word-typed {
   color: var(--accent);
-  display: inline-block;
+  display: inline;
   letter-spacing: normal !important;
-  pointer-events: none;
-  white-space: nowrap;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
 }
 
-.trainer-word-display.has-error .trainer-word-overlay {
+.trainer-word-remaining {
+  color: var(--text-sub);
+  display: inline;
+  letter-spacing: normal !important;
+}
+
+.trainer-word-display.has-error .trainer-word-typed {
   color: var(--error);
+}
+
+.trainer-word-display.has-error {
   animation: wordShake 0.25s ease-in-out;
 }
 

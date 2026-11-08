@@ -272,13 +272,12 @@ class KeyboardTrainer {
     if (targetDisplay) {
       const word = target.word;
       const typedPart = word.substring(0, this.charIdx);
+      const remainingPart = word.substring(this.charIdx);
 
-      // ຊັ້ນທີ 1 (Base): ຄຳສັບເຕັມສີເທົາ
-      // ຊັ້ນທີ 2 (Overlay): ສ່ວນທີ່ພິມຖືກແລ້ວສີຟ້າເຕັມໂຕ 100% ບໍ່ຕັດເຄິ່ງສະຫຼະ
+      // Single-Layer: ສ່ວນທີ່ພິມຖືກແລ້ວ (ສີຟ້າ) ຕາມດ້ວຍສ່ວນທີ່ຍັງບໍ່ທັນພິມ (ສີເທົາ) - ບໍ່ຊ້ອນ 2 ຊັ້ນ
       targetDisplay.innerHTML = `
         <div class="trainer-word-display" id="trainer-display-box">
-          <span class="trainer-word-base">${word}</span>
-          <span class="trainer-word-overlay">${typedPart}</span>
+          <span class="trainer-word-typed">${typedPart}</span><span class="trainer-word-remaining">${remainingPart}</span>
         </div>
       `;
     }

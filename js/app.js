@@ -452,6 +452,15 @@ class PhimLaoApp {
 
   routeCharacterInput(char) {
     if (!char) return;
+    // ທຳຄວາມສະອາດຕົວອັກສອນ: ຕັດ ZWSP, NBSP, Dotted Circle ທີ່ອາດຕິດມານຳ Mobile IME
+    char = char.replace(/[\u00A0\u200B\u25CC]/g, '');
+    if (!char) return;
+
+    // ແປງຕົວອັກສອນໄທ/placeholder ໃຫ້ເປັນມາດຕະຖານລາວ
+    if (typeof canonicalizeLao === 'function') {
+      char = canonicalizeLao(char);
+    }
+
     if (this.currentMode === 'speed') {
       this.speedGame.handleInput(char);
     } else if (this.currentMode === 'arcade') {

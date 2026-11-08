@@ -377,18 +377,19 @@ const LAO_WORDS = {
   ]
 };
 
-// ກວດສອບສະເພາະຕົວອັກສອນລາວແທ້ Unicode (U+0E80 - U+0EFF) ແລະ ສັນຍະລັກເງິນກີບ (₭ U+20AD)
+// ກວດສອບສະເພາະຕົວອັກສອນລາວແທ້ Unicode (U+0E80 - U+0EFF) ແລະ ສັນຍະລັກເງິນກີບ (₭ U+20AD) ລວມທັງຕົວອັກສອນໄທທີ່ຕ້ອງແປງ
 function isNativeLaoChar(char) {
   if (!char) return false;
   const code = char.charCodeAt(0);
-  return (code >= 0x0E80 && code <= 0x0EFF) || code === 0x20AD;
+  return (code >= 0x0E80 && code <= 0x0EFF) || (code >= 0x0E00 && code <= 0x0E7F) || code === 0x20AD;
 }
 
-// ກວດສອບຕົວອັກສອນທີ່ຮອງຮັບເທິງແປ້ນພິມລາວ (ລວມທັງຕົວເລກ, ເຄື່ອງໝາຍ, ແລະ ຍະຫວ່າງ)
+// ກວດສອບຕົວອັກສອນທີ່ຮອງຮັບເທິງແປ້ນພິມລາວ (ລວມທັງຕົວເລກ, ເຄື່ອງໝາຍ, ຍະຫວ່າງ, ແລະ ແປ້ນພິມໄທ)
 function isValidLaoChar(char) {
   if (!char) return false;
   const code = char.charCodeAt(0);
   if (code >= 0x0E80 && code <= 0x0EFF) return true;
+  if (code >= 0x0E00 && code <= 0x0E7F) return true; // ຮອງຮັບແປ້ນພິມໄທ (Thai layout)
   if (code === 0x20AD) return true; // ₭
   if (code === 0x20) return true;   // space
   if (code >= 33 && code <= 126) return true; // punctuation and numbers
@@ -401,19 +402,43 @@ function isValidLaoChar(char) {
 function canonicalizeLao(str) {
   if (!str) return '';
   let s = str.normalize('NFC');
+
+  // 1. ແປງຕົວອັກສອນໄທເປັນລາວ (ກໍລະນີຜູ້ໃຊ້ເປີດແປ້ນພິມໄທແລ້ວພິມ)
+  s = s.replace(/[\u0E01-\u0E5B]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    if (code >= 0x0E48 && code <= 0x0E4B) return String.fromCharCode(code + 0x80);
+    if (code >= 0x0E30 && code <= 0x0E44) return String.fromCharCode(code + 0x80);
+    return ch;
+  });
+
+  // 2. ຕັດ placeholder ຍະຫວ່າງ/NBSP/ZWSP/Dotted Circle ທີ່ມັກຕິດມານຳວັນນະຍຸດໃນ Mobile IME
+  s = s.replace(/[\u0020\u00A0\u200B\u25CC]+/g, '');
+
+  // 3. ແປງຕົວປະສົມພິເສດ
   s = s.replace(/ໝ/g, 'ຫມ');
   s = s.replace(/ໜ/g, 'ຫນ');
   s = s.replace(/ຫຼ/g, 'ຫລ');
   s = s.replace(/\u0EBC/g, 'ລ'); // ຼ
 
-  // ແປງທຸກຮູບແບບຂອງ ສະຫຼະ ອຳ (້ຳ, ຳ້, ໍ້າ, ໍ່ໍາ, ໍ-້-າ, ້-ໍ-າ) ໃຫ້ເປັນມາດຕະຖານດຽວກັນ: ໍ + ວັນນະຍຸດ + າ
+  // 4. ແປງ ໄມ້ຕີ (Shift+H ໊) ເປັນ ໄມ້ໂທ (້) ແລະ ໄມ້ຈັດຕະວາ (Shift+J ໋) ເປັນ ໄມ້ເອກ (່) ປ້ອງກັນກົດ Shift ຄ້າງ
+  s = s.replace(/\u0ECA/g, '\u0EC9');
+  s = s.replace(/\u0ECB/g, '\u0EC8');
+
+  // 5. ແປງທຸກຮູບແບບຂອງ ສະຫຼະ ອຳ (້ຳ, ຳ້, ໍ້າ, ໍ່ໍາ, ໍ-້-າ, ້-ໍ-າ) ໃຫ້ເປັນມາດຕະຖານດຽວກັນ: ໍ + ວັນນະຍຸດ + າ
   s = s.replace(/([\u0EC8-\u0ECC])\u0EB3/g, '\u0ECD$1\u0EB2');
   s = s.replace(/\u0EB3([\u0EC8-\u0ECC])/g, '\u0ECD$1\u0EB2');
   s = s.replace(/\u0EB3/g, '\u0ECD\u0EB2');
   s = s.replace(/([\u0EC8-\u0ECC])\u0ECD\u0EB2/g, '\u0ECD$1\u0EB2');
 
-  // ຈັດລຽງວັນນະຍຸດ ແລະ ສະຫຼະເທິງອື່ນໆ: ສະຫຼະ + ວັນນະຍຸດ
+  // 6. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງ ສະຫຼະ ອາ (າ): ຊ-າ-້ -> ຊ-້-າ, ມ-າ-້ -> ມ-້-າ, ປ-າ-່ -> ປ-່-າ
+  s = s.replace(/\u0EB2([\u0EC8-\u0ECC])/g, '$1\u0EB2');
+
+  // 7. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງຕົວສະກົດທ້າຍຄຳ: ຊ-າ-ງ-້ -> ຊ-້-າ-ງ, ບ-າ-ນ-້ -> ບ-້-າ-ນ, ຮ-າ-ນ-້ -> ຮ-້-າ-ນ
+  s = s.replace(/([\u0E80-\u0EAE])\u0EB2([\u0E80-\u0EAE])([\u0EC8-\u0ECC])/g, '$1$3\u0EB2$2');
+
+  // 8. ຈັດລຽງວັນນະຍຸດ ແລະ ສະຫຼະເທິງອື່ນໆ: ສະຫຼະ + ວັນນະຍຸດ (ເຊັ່ນ ້ + ັ -> ັ້, ້ + ິ -> ິ້, ້ + ົ -> ົ້)
   s = s.replace(/([\u0EC8-\u0ECC])([\u0EB1\u0EB4-\u0EB9\u0EBB])/g, '$2$1');
+
   return s;
 }
 

@@ -9,7 +9,13 @@ class PhimLaoApp {
     this.currentMode = 'speed'; // 'speed' | 'arcade' | 'trainer'
     this.difficulty = 'easy';
     this.autoTranslateLao = true; // ເປີດແປງປຸ່ມ QWERTY -> ລາວ ອັດຕະໂນມັດເປັນຄ່າເລີ່ມຕົ້ນ
-    this.showKeyboard = true;
+
+    // ກວດສອບອຸປະກອນມືຖື: ຫາກເປັນໂທລະສັບມືຖື ໃຫ້ປິດ Virtual Keyboard ເປັນຄ່າເລີ່ມຕົ້ນ ເພື່ອໃຊ້ Gboard/ຄີບອດມືຖື
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024)
+      || window.innerWidth <= 768;
+
+    this.showKeyboard = !this.isMobile;
     this.isShiftActive = false; // ສະຖານະການກົດປຸ່ມ Shift
     this.lastProcessedTime = 0; // ປ້ອງກັນການກົດຊ້ຳ 2 ຄັ້ງ (Duplicate Event Guard)
 
@@ -30,6 +36,22 @@ class PhimLaoApp {
     this.arcadePanel = document.getElementById('panel-arcade');
     this.trainerPanel = document.getElementById('panel-trainer');
     this.virtualKeyboardEl = document.getElementById('virtual-keyboard');
+
+    // Drawer Elements (ເມນູລີ້ນຊັກຕັ້ງຄ່າ)
+    this.settingsDrawer = document.getElementById('settings-drawer');
+    this.drawerBackdrop = document.getElementById('drawer-backdrop');
+    this.drawerToggleBtn = document.getElementById('drawer-toggle-btn');
+    this.drawerCloseBtn = document.getElementById('drawer-close-btn');
+    this.drawerKbToggle = document.getElementById('drawer-kb-toggle');
+    this.drawerSoundToggle = document.getElementById('drawer-sound-toggle');
+    this.drawerAutoTranslateToggle = document.getElementById('drawer-autotranslate-toggle');
+    this.drawerHighWpm = document.getElementById('drawer-high-wpm');
+    this.drawerHighAcc = document.getElementById('drawer-high-acc');
+
+    // Header Controls
+    this.kbToggleBtn = document.getElementById('kb-visibility-toggle');
+    this.autoTranslateToggle = document.getElementById('auto-translate-toggle');
+    this.soundToggle = document.getElementById('sound-toggle');
 
     // ສະຖິຕິເທິງແຖບ
     this.statWpm = document.getElementById('stat-wpm');
@@ -112,6 +134,94 @@ class PhimLaoApp {
 
       this.virtualKeyboardEl.appendChild(rowDiv);
     });
+
+    this.updateKeyboardVisibilityUI();
+  }
+
+  updateKeyboardVisibilityUI() {
+    if (this.virtualKeyboardEl) {
+      this.virtualKeyboardEl.style.display = this.showKeyboard ? 'flex' : 'none';
+    }
+    if (this.kbToggleBtn) {
+      this.kbToggleBtn.classList.toggle('active', this.showKeyboard);
+      this.kbToggleBtn.innerHTML = this.showKeyboard 
+        ? '👁️ ແປ້ນພິມສະເໝືອນ (ເປີດ)' 
+        : '👁️ ແປ້ນພິມສະເໝືອນ (ປິດ)';
+    }
+    if (this.drawerKbToggle) {
+      this.drawerKbToggle.classList.toggle('active', this.showKeyboard);
+      const span = this.drawerKbToggle.querySelector('.toggle-status');
+      if (span) span.textContent = this.showKeyboard ? 'ເປີດ' : 'ປິດ';
+    }
+  }
+
+  toggleVirtualKeyboard() {
+    this.showKeyboard = !this.showKeyboard;
+    this.updateKeyboardVisibilityUI();
+  }
+
+  updateSoundUI() {
+    const isMuted = sounds.isMuted;
+    if (this.soundToggle) {
+      this.soundToggle.innerHTML = isMuted ? '🔇 ສຽງ: ປິດ' : '🔊 ສຽງ: ເປີດ';
+      this.soundToggle.classList.toggle('muted', isMuted);
+    }
+    if (this.drawerSoundToggle) {
+      this.drawerSoundToggle.classList.toggle('active', !isMuted);
+      const span = this.drawerSoundToggle.querySelector('.toggle-status');
+      if (span) span.textContent = isMuted ? 'ປິດ' : 'ເປີດ';
+    }
+  }
+
+  toggleSound() {
+    sounds.toggleMute();
+    this.updateSoundUI();
+  }
+
+  updateAutoTranslateUI() {
+    if (this.autoTranslateToggle) {
+      this.autoTranslateToggle.classList.toggle('active', this.autoTranslateLao);
+      this.autoTranslateToggle.textContent = this.autoTranslateLao 
+        ? '🇱🇦 ແປ້ນພິມ: ອັດຕະໂນມັດ (ເປີດ)' 
+        : '⌨️ ແປ້ນພິມ: ຕາມລະບົບ';
+    }
+    if (this.drawerAutoTranslateToggle) {
+      this.drawerAutoTranslateToggle.classList.toggle('active', this.autoTranslateLao);
+      const span = this.drawerAutoTranslateToggle.querySelector('.toggle-status');
+      if (span) span.textContent = this.autoTranslateLao ? 'ເປີດ' : 'ປິດ';
+    }
+  }
+
+  toggleAutoTranslate() {
+    this.autoTranslateLao = !this.autoTranslateLao;
+    this.updateAutoTranslateUI();
+  }
+
+  openDrawer() {
+    if (this.settingsDrawer && this.drawerBackdrop) {
+      this.settingsDrawer.classList.add('open');
+      this.drawerBackdrop.classList.add('open');
+      this.settingsDrawer.setAttribute('aria-hidden', 'false');
+      this.syncDrawerStats();
+    }
+  }
+
+  closeDrawer() {
+    if (this.settingsDrawer && this.drawerBackdrop) {
+      this.settingsDrawer.classList.remove('open');
+      this.drawerBackdrop.classList.remove('open');
+      this.settingsDrawer.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  syncDrawerStats() {
+    const bestWpm = localStorage.getItem('phimlao_best_wpm') || '0';
+    if (this.drawerHighWpm) {
+      this.drawerHighWpm.textContent = bestWpm;
+    }
+    if (this.drawerHighAcc) {
+      this.drawerHighAcc.textContent = '100%';
+    }
   }
 
   setShiftState(isShift) {
@@ -206,38 +316,44 @@ class PhimLaoApp {
       });
     });
 
-    // Audio Mute Toggle
-    const soundToggle = document.getElementById('sound-toggle');
-    if (soundToggle) {
-      soundToggle.addEventListener('click', () => {
-        const isMuted = sounds.toggleMute();
-        soundToggle.innerHTML = isMuted ? '🔇 ສຽງ: ປິດ' : '🔊 ສຽງ: ເປີດ';
-        soundToggle.classList.toggle('muted', isMuted);
+    // Drawer (ເມນູລີ້ນຊັກ) Toggle & Close Listeners
+    if (this.drawerToggleBtn) {
+      this.drawerToggleBtn.addEventListener('click', () => this.openDrawer());
+    }
+    if (this.drawerCloseBtn) {
+      this.drawerCloseBtn.addEventListener('click', () => this.closeDrawer());
+    }
+    if (this.drawerBackdrop) {
+      this.drawerBackdrop.addEventListener('click', () => this.closeDrawer());
+    }
+    if (this.drawerKbToggle) {
+      this.drawerKbToggle.addEventListener('click', () => this.toggleVirtualKeyboard());
+    }
+    if (this.drawerSoundToggle) {
+      this.drawerSoundToggle.addEventListener('click', () => this.toggleSound());
+    }
+    if (this.drawerAutoTranslateToggle) {
+      this.drawerAutoTranslateToggle.addEventListener('click', () => this.toggleAutoTranslate());
+    }
+    document.querySelectorAll('[data-drawer-diff]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.switchDifficulty(btn.dataset.drawerDiff);
       });
+    });
+
+    // Audio Mute Toggle (Header)
+    if (this.soundToggle) {
+      this.soundToggle.addEventListener('click', () => this.toggleSound());
     }
 
-    // Auto-Translate Lao Keyboard Toggle
-    const autoTranslateToggle = document.getElementById('auto-translate-toggle');
-    if (autoTranslateToggle) {
-      autoTranslateToggle.textContent = '🇱🇦 ແປ້ນພິມ: ອັດຕະໂນມັດ (ເປີດ)';
-      autoTranslateToggle.classList.add('active');
-      autoTranslateToggle.addEventListener('click', () => {
-        this.autoTranslateLao = !this.autoTranslateLao;
-        autoTranslateToggle.classList.toggle('active', this.autoTranslateLao);
-        autoTranslateToggle.textContent = this.autoTranslateLao 
-          ? '🇱🇦 ແປ້ນພິມ: ອັດຕະໂນມັດ (ເປີດ)' 
-          : '⌨️ ແປ້ນພິມ: ຕາມລະບົບ';
-      });
+    // Auto-Translate Lao Keyboard Toggle (Header)
+    if (this.autoTranslateToggle) {
+      this.autoTranslateToggle.addEventListener('click', () => this.toggleAutoTranslate());
     }
 
-    // Keyboard Visibility Toggle
-    const kbToggle = document.getElementById('kb-visibility-toggle');
-    if (kbToggle) {
-      kbToggle.addEventListener('click', () => {
-        this.showKeyboard = !this.showKeyboard;
-        this.virtualKeyboardEl.style.display = this.showKeyboard ? 'flex' : 'none';
-        kbToggle.classList.toggle('active', this.showKeyboard);
-      });
+    // Keyboard Visibility Toggle (Header)
+    if (this.kbToggleBtn) {
+      this.kbToggleBtn.addEventListener('click', () => this.toggleVirtualKeyboard());
     }
 
     // Restart Button
@@ -260,17 +376,16 @@ class PhimLaoApp {
     window.addEventListener('blur', () => this.clearAllVirtualKeyStates());
 
     // Focus mobile input ONLY on touch/mobile devices
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-      || (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024);
-
-    if (isMobileDevice) {
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('button, input, select, textarea, a, .key')) {
+    if (this.isMobile) {
+      const handleMobileFocus = (e) => {
+        if (!e.target.closest('button, input, select, textarea, a, .key, .settings-drawer, .btn-drawer-toggle, .drawer-backdrop')) {
           if (this.mobileInput) {
             this.mobileInput.focus();
           }
         }
-      });
+      };
+      document.addEventListener('click', handleMobileFocus);
+      document.addEventListener('touchend', handleMobileFocus, { passive: true });
     }
 
     // Mobile input sink listener (with duplicate suppression)
@@ -479,6 +594,22 @@ class PhimLaoApp {
   }
 
   switchMode(mode) {
+    // 1. ຢຸດ ແລະ ເຄຼຍ Game ທຸກໂໝດທີ່ກຳລັງທຳງານ ເພື່ອບໍ່ໃຫ້ Timer ຄ້າງ ຫຼື Modal ແຈ້ງເຕືອນຂ້າມໂໝດ
+    if (this.speedGame) {
+      this.speedGame.stop();
+    }
+    if (this.arcadeGame) {
+      this.arcadeGame.stop();
+    }
+    if (this.trainerGame && typeof this.trainerGame.reset === 'function') {
+      this.trainerGame.reset();
+    }
+
+    // 2. ປິດ Result Modal ທັນທີຫາກກຳລັງສະແດງຢູ່
+    if (this.resultModal) {
+      this.resultModal.style.display = 'none';
+    }
+
     this.currentMode = mode;
     this.clearAllVirtualKeyStates();
 
@@ -499,11 +630,9 @@ class PhimLaoApp {
         this.arcadeGame.spawnWord();
       }, 60);
     } else if (mode === 'trainer') {
-      this.arcadeGame.stop();
       this.restartCurrentGame();
       this.trainerGame.updateTarget();
     } else {
-      this.arcadeGame.stop();
       this.restartCurrentGame();
     }
   }
@@ -515,6 +644,14 @@ class PhimLaoApp {
     this.arcadeGame.setDifficulty(diff);
     this.trainerGame.setDifficulty(diff);
     this.restartCurrentGame();
+
+    // ຊິ້ງສະຖານະປຸ່ມລະດັບຄວາມຍາກທັງເທິງ Bar ແລະ ໃນ Drawer
+    document.querySelectorAll('[data-diff]').forEach(b => {
+      b.classList.toggle('active', b.dataset.diff === diff);
+    });
+    document.querySelectorAll('[data-drawer-diff]').forEach(b => {
+      b.classList.toggle('active', b.dataset.drawerDiff === diff);
+    });
   }
 
   restartCurrentGame() {
@@ -746,6 +883,7 @@ class PhimLaoApp {
     if (topWpmEl) {
       topWpmEl.textContent = `🏆 WPM ສູງສຸດ: ${bestWpm}`;
     }
+    this.syncDrawerStats();
   }
 }
 

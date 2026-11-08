@@ -40,11 +40,16 @@ body {
   word-spacing: normal !important;
   background-color: var(--bg-primary);
   color: var(--text-main);
+  height: 100%;
+  height: 100dvh;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Container */
@@ -389,8 +394,16 @@ header {
 .speed-word .char-err {
   color: #f43f5e !important;
   background: rgba(244, 63, 94, 0.25);
-  border-radius: 3px;
-  padding: 0 1px;
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+}
+
+.speed-word .char-pending {
+  color: #64748b !important;
+  font-weight: normal !important;
+  text-shadow: none !important;
 }
 
 .word-caret {
@@ -763,12 +776,19 @@ header {
 .c-index { background: var(--c-index); }
 .c-thumb { background: var(--c-thumb); }
 
-/* Hidden mobile sink */
+/* Hidden mobile sink (fixed at center to guarantee zero viewport jumping or scrolling) */
 #mobile-input-sink {
-  position: absolute;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
   opacity: 0;
-  left: -9999px;
-  top: -9999px;
+  pointer-events: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  z-index: -1;
 }
 
 /* Result Modal */
@@ -1002,64 +1022,373 @@ footer p {
 }
 
 /* ========================================================
+   Slide-out Settings Drawer (ເມນູລີ້ນຊັກ) & Backdrop
+   ======================================================== */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 998;
+}
+
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(340px, 86vw);
+  height: 100%;
+  height: 100dvh;
+  background: rgba(15, 23, 42, 0.98);
+  border-left: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.65);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(30, 41, 59, 0.4);
+}
+
+.drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drawer-title h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.btn-drawer-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  color: var(--text-sub);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-drawer-close:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent);
+}
+
+.drawer-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.drawer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  gap: 0.75rem;
+}
+
+.drawer-item.flex-col {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.drawer-item-info {
+  flex: 1;
+}
+
+.drawer-item-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.2rem;
+}
+
+.drawer-item-desc {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  line-height: 1.35;
+}
+
+.drawer-btn-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-sub);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.drawer-btn-toggle.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.drawer-difficulty-group {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.drawer-diff-btn {
+  flex: 1;
+  padding: 0.5rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: rgba(30, 41, 59, 0.6);
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drawer-diff-btn.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+
+.drawer-stats-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.stats-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.65rem;
+}
+
+.stats-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  padding: 0.35rem 0;
+}
+
+.stats-card-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Drawer Toggle Button in Header */
+.btn-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-drawer-toggle:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+.hamburger-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ========================================================
    Responsive Breakpoints
    ======================================================== */
 @media (max-width: 768px) {
-  .container {
-    padding: 0.75rem;
+  header {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .header-content {
+    align-items: center;
+  }
+
+  /* Compact Brand on mobile so it never blocks the game */
+  .brand-logo {
+    font-size: 1.3rem;
+    padding: 0.35rem;
+    border-radius: 8px;
   }
 
   .brand-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+  }
+
+  .brand-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+  }
+
+  #top-wpm-badge {
+    font-size: 0.7rem !important;
+  }
+
+  /* Hide the 3 large cluttered pills on mobile; accessible inside the slide-out drawer */
+  #auto-translate-toggle,
+  #sound-toggle,
+  #kb-visibility-toggle {
+    display: none !important;
+  }
+
+  .btn-drawer-toggle {
+    display: inline-flex !important;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  main.container {
+    padding: 0.5rem 0.65rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Compact Control Bar on mobile */
+  .control-bar {
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .tab-group {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .tab-btn {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .difficulty-group {
+    display: none; /* Accessible in the drawer on mobile */
   }
 
   .stats-bar {
-    gap: 1.25rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    gap: 0.85rem;
   }
 
   .stat-item .val {
-    font-size: 1.7rem;
+    font-size: 1.4rem;
   }
 
+  .stat-item .lbl {
+    font-size: 0.7rem;
+  }
+
+  .speed-options-bar {
+    margin-bottom: 0.5rem;
+    gap: 0.35rem;
+  }
+
+  .speed-opt-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  /* Compact word stream to fit cleanly above phone virtual keyboard */
   .speed-words-wrapper {
-    font-size: 1.7rem;
-    height: 130px;
-    gap: 0.5rem 0.9rem;
+    height: 105px !important;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
   }
 
-  .trainer-word-display {
-    font-size: 2.5rem;
+  .speed-word {
+    padding: 0.15rem 0.45rem;
+    margin: 0.15rem 0.25rem;
   }
 
+  .speed-word .word-base,
+  .speed-word .word-overlay {
+    font-size: 1.35rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .speed-word .word-overlay {
+    top: 0.15rem;
+    left: 0.45rem;
+  }
+
+  .speed-controls {
+    margin-top: 0.35rem;
+  }
+
+  .btn-restart-game {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  /* Hide in-game virtual keyboard on mobile by default */
   .keyboard-container {
-    padding: 8px 4px;
-    gap: 4px;
-  }
-
-  .kb-row {
-    gap: 3px;
-  }
-
-  .key {
-    height: 44px;
-    min-width: 24px;
-    padding: 2px 3px;
-    border-radius: 5px;
-  }
-
-  .key-normal {
-    font-size: 0.95rem;
-  }
-
-  .key-shift {
-    font-size: 0.6rem;
-  }
-
-  .key-qwerty {
     display: none;
   }
 
-  .finger-legend {
-    display: none;
+  footer {
+    display: none; /* Hide footer on mobile gameplay screen to avoid scrolling */
   }
 }

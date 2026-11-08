@@ -2,7 +2,7 @@
 <html lang="lo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ພີມລາວ - ເກມຝຶກພິມສັບພາສາລາວ (PhimLao Typing Game)</title>
   <meta name="description" content="ເວັບເກມຝຶກພິມພາສາລາວແທ້ 100% ພ້ອມໂໝດງ່າຍ, ກາງ, ຍາກ ຮອງຮັບທັງຄອມພິວເຕີ ແລະ ມືຖື">
   
@@ -16,25 +16,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=4.5">
+  <link rel="stylesheet" href="css/style.css?v=4.6">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇱🇦</text></svg>">
 </head>
 <body>
 
-  <!-- Hidden sink for mobile typing integration -->
-  <input type="text" id="mobile-input-sink" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-hidden="true">
+  <!-- Hidden sink for mobile typing integration (fixed at center, zero scroll risk) -->
+  <input type="text" id="mobile-input-sink" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" aria-hidden="true">
 
   <!-- Header -->
   <header>
     <div class="container header-content">
       <div class="brand">
         <div class="brand-logo">⌨️</div>
-        <div>
-          <div style="display: flex; align-items: center;">
+        <div class="brand-info">
+          <div class="brand-title-row">
             <h1 class="brand-title">ພີມລາວ</h1>
             <span class="brand-badge">ພາສາລາວແທ້ 100%</span>
           </div>
-          <div id="top-wpm-badge" style="font-size: 0.75rem; color: var(--text-sub); margin-top: 2px;">
+          <div id="top-wpm-badge" class="brand-sub">
             🏆 WPM ສູງສຸດ: 0
           </div>
         </div>
@@ -47,12 +47,89 @@
         <button type="button" class="btn-pill" id="sound-toggle">
           🔊 ສຽງ: ເປີດ
         </button>
-        <button type="button" class="btn-pill active" id="kb-visibility-toggle">
+        <button type="button" class="btn-pill" id="kb-visibility-toggle">
           👁️ ແປ້ນພິມສະເໝືອນ
+        </button>
+        <button type="button" class="btn-drawer-toggle" id="drawer-toggle-btn" aria-label="ເມນູຕັ້ງຄ່າ">
+          <span class="hamburger-icon">☰</span>
+          <span class="drawer-btn-label">ຕັ້ງຄ່າ</span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Slide-out Settings Drawer (ເມນູລີ້ນຊັກສຳລັບມືຖື ແລະ ຈໍທຸກຂະໜາດ) -->
+  <div id="drawer-backdrop" class="drawer-backdrop"></div>
+  <aside id="settings-drawer" class="settings-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span>⚙️</span>
+        <h2>ຕັ້ງຄ່າລະບົບ</h2>
+      </div>
+      <button type="button" class="btn-drawer-close" id="drawer-close-btn" aria-label="ປິດເມນູ">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- ຕົວເລືອກ 1: ແປ້ນພິມສະເໝືອນໃນຈໍ -->
+      <div class="drawer-item">
+        <div class="drawer-item-info">
+          <div class="drawer-item-title">👁️ ແປ້ນພິມສະເໝືອນ</div>
+          <div class="drawer-item-desc">ສະແດງແປ້ນພິມເທິງໜ້າຈໍ (ປິດອັດຕະໂນມັດໃນມືຖື)</div>
+        </div>
+        <button type="button" class="drawer-btn-toggle" id="drawer-kb-toggle">
+          <span class="toggle-status">ປິດ</span>
+        </button>
+      </div>
+
+      <!-- ຕົວເລືອກ 2: ສຽງເອັບເຟັກ -->
+      <div class="drawer-item">
+        <div class="drawer-item-info">
+          <div class="drawer-item-title">🔊 ສຽງເອັບເຟັກ</div>
+          <div class="drawer-item-desc">ສຽງກົດປຸ່ມ, ສຽງພິມຖືກ ແລະ ສຽງຈົບເກມ</div>
+        </div>
+        <button type="button" class="drawer-btn-toggle active" id="drawer-sound-toggle">
+          <span class="toggle-status">ເປີດ</span>
+        </button>
+      </div>
+
+      <!-- ຕົວເລືອກ 3: ແປ້ນພິມອັດຕະໂນມັດ QWERTY -> LAO -->
+      <div class="drawer-item">
+        <div class="drawer-item-info">
+          <div class="drawer-item-title">⌨️ ແປ້ນພິມອັດຕະໂນມັດ</div>
+          <div class="drawer-item-desc">ແປງປຸ່ມ QWERTY ເປັນພາສາລາວອັດຕະໂນມັດ</div>
+        </div>
+        <button type="button" class="drawer-btn-toggle active" id="drawer-autotranslate-toggle">
+          <span class="toggle-status">ເປີດ</span>
+        </button>
+      </div>
+
+      <!-- ຕົວເລືອກ 4: ລະດັບຄວາມຍາກ -->
+      <div class="drawer-item flex-col">
+        <div class="drawer-item-info">
+          <div class="drawer-item-title">🎯 ລະດັບຄວາມຍາກ</div>
+          <div class="drawer-item-desc">ເລືອກລະດັບຊຸດຄຳສັບທີ່ຕ້ອງການຝຶກ</div>
+        </div>
+        <div class="drawer-difficulty-group">
+          <button type="button" class="drawer-diff-btn active" data-drawer-diff="easy">ງ່າຍ</button>
+          <button type="button" class="drawer-diff-btn" data-drawer-diff="medium">ກາງ</button>
+          <button type="button" class="drawer-diff-btn" data-drawer-diff="hard">ຍາກ</button>
+        </div>
+      </div>
+
+      <!-- ສະຖິຕິຄວາມໄວ -->
+      <div class="drawer-stats-card">
+        <div class="stats-card-title">🏆 ສະຖິຕິຂອງທ່ານ</div>
+        <div class="stats-card-row">
+          <span>WPM ສູງສຸດ:</span>
+          <span id="drawer-high-wpm" class="text-accent font-bold">0</span>
+        </div>
+        <div class="stats-card-row">
+          <span>ຄວາມຖືກຕ້ອງ:</span>
+          <span id="drawer-high-acc" class="text-success font-bold">100%</span>
+        </div>
+      </div>
+    </div>
+  </aside>
 
   <!-- Main Content -->
   <main class="container">
@@ -202,12 +279,12 @@
   </footer>
 
   <!-- Scripts with Cache Busting -->
-  <script src="js/words.js?v=4.5"></script>
-  <script src="js/keyboard-layout.js?v=4.5"></script>
-  <script src="js/audio.js?v=4.5"></script>
-  <script src="js/game-speed.js?v=4.5"></script>
-  <script src="js/game-arcade.js?v=4.5"></script>
-  <script src="js/game-trainer.js?v=4.5"></script>
-  <script src="js/app.js?v=4.5"></script>
+  <script src="js/words.js?v=4.6"></script>
+  <script src="js/keyboard-layout.js?v=4.6"></script>
+  <script src="js/audio.js?v=4.6"></script>
+  <script src="js/game-speed.js?v=4.6"></script>
+  <script src="js/game-arcade.js?v=4.6"></script>
+  <script src="js/game-trainer.js?v=4.6"></script>
+  <script src="js/app.js?v=4.6"></script>
 </body>
 </html>

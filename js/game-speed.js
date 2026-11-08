@@ -1,6 +1,6 @@
 /**
  * ໂໝດທົດສອບຄວາມໄວການພິມ (Speed Test Mode - Monkeytype Style)
- * ປັບປຸງລະບົບສະແດງຜົນພາສາລາວແບບເຕັມຄຳ (Full Word Overlay) ບໍ່ຕັດແຍກສະຫຼະ-ວັນນະຍຸດ
+ * ປັບປຸງການລົງສີເຕັມໂຕ 100% ແຍກລະຫວ່າງພະຍັນຊະນະ ແລະ ສະຫຼະ ພ້ອມປຸ່ມ Tab ເລື່ອນຄຳສັບ
  */
 
 class SpeedTestGame {
@@ -18,7 +18,7 @@ class SpeedTestGame {
     this.wordsList = [];
     this.currentWordIdx = 0;
     this.currentInput = '';
-    this.history = []; // ບັນທຶກສະຖານະແຕ່ລະຄຳ
+    this.history = [];
 
     this.startTime = null;
     this.timerInterval = null;
@@ -75,13 +75,12 @@ class SpeedTestGame {
     const rawList = LAO_WORDS[this.options.difficulty] || LAO_WORDS.easy;
     const count = this.options.mode === 'words' ? this.options.wordLimit : 60;
     
-    // ສຸ່ມຄຳສັບແບບບໍ່ຊ້ຳກັນຫຼາຍເກີນໄປ
     const shuffled = [...rawList].sort(() => 0.5 - Math.random());
     this.wordsList = [];
     while (this.wordsList.length < count) {
       for (const item of shuffled) {
         if (this.wordsList.length >= count) break;
-        this.wordsList.push(item.word);
+        this.wordsList.push(item.word.normalize('NFC'));
       }
     }
   }
@@ -117,6 +116,72 @@ class SpeedTestGame {
     }
   }
 
+  // ເລື່ອນໄປຄຳສັບຖັດໄປ (ເມື່ອກົດ Space ຫຼື Tab)
+  advanceToNextWord() {
+    if (this.isFinished) return;
+    if (!this.isActive) this.start();
+
+    const currentWord = this.wordsList[this.currentWordIdx];
+    if (!currentWord) return;
+
+    const normalizedInput = this.currentInput.normalize('NFC').trim();
+    const normalizedTarget = currentWord.normalize('NFC').trim();
+
+    const isWordCorrect = (normalizedInput === normalizedTarget);
+    this.history.push({
+      expected: normalizedTarget,
+      typed: normalizedInput,
+      correct: isWordCorrect
+    });
+
+    const currentWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
+    if (currentWordEl) {
+      currentWordEl.classList.remove('current', 'has-error');
+      if (isWordCorrect) {
+        currentWordEl.classList.add('word-correct');
+        this.correctChars += normalizedTarget.length + 1;
+        sounds.playWordComplete();
+      } else {
+        currentWordEl.classList.add('word-incorrect');
+        this.errorChars += Math.max(1, Math.abs(normalizedTarget.length - normalizedInput.length));
+        sounds.playError();
+      }
+    }
+
+    this.currentWordIdx++;
+    this.currentInput = '';
+
+    // ກວດສອບໂໝດຄົບຈຳນວນຄຳ
+    if (this.options.mode === 'words' && this.currentWordIdx >= this.wordsList.length) {
+      this.finish();
+      return;
+    }
+
+    // ຖ້າໃກ້ໝົດລາຍການຄຳສັບໃນໂໝດເວລາ ໃຫ້ເພີ່ມອີກ
+    if (this.currentWordIdx >= this.wordsList.length - 10) {
+      const extra = [...LAO_WORDS[this.options.difficulty]].sort(() => 0.5 - Math.random());
+      const extraStrings = [];
+      for (const item of extra) {
+        const norm = item.word.normalize('NFC');
+        this.wordsList.push(norm);
+        extraStrings.push(norm);
+      }
+      this.appendExtraWords(extraStrings);
+    }
+
+    // ໄຮໄລ້ຄຳຖັດໄປ
+    const nextWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
+    if (nextWordEl) {
+      nextWordEl.classList.add('current');
+    }
+
+    this.renderWord(this.currentWordIdx);
+    this.scrollToCurrentWord();
+    if (this.options.onUpdate) {
+      this.options.onUpdate(this.getStats());
+    }
+  }
+
   handleInput(char, isBackspace = false, isSpace = false) {
     if (this.isFinished) return;
 
@@ -137,68 +202,20 @@ class SpeedTestGame {
     }
 
     if (isSpace) {
-      if (this.currentInput.length === 0) return; // ບໍ່ໃຫ້ກົດ space ຊ້ຳໆ
-
-      // ກວດສອບຄວາມຖືກຕ້ອງຂອງຄຳສັບ
-      const isWordCorrect = (this.currentInput === currentWord);
-      this.history.push({
-        expected: currentWord,
-        typed: this.currentInput,
-        correct: isWordCorrect
-      });
-
-      const currentWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
-      if (currentWordEl) {
-        currentWordEl.classList.remove('current', 'has-error');
-        if (isWordCorrect) {
-          currentWordEl.classList.add('word-correct');
-          this.correctChars += currentWord.length + 1; // +1 space
-          sounds.playWordComplete();
-        } else {
-          currentWordEl.classList.add('word-incorrect');
-          this.errorChars += Math.abs(currentWord.length - this.currentInput.length) + 1;
-          sounds.playError();
-        }
-      }
-
-      this.currentWordIdx++;
-      this.currentInput = '';
-
-      // ກວດສອບໂໝດຄົບຈຳນວນຄຳ
-      if (this.options.mode === 'words' && this.currentWordIdx >= this.wordsList.length) {
-        this.finish();
-        return;
-      }
-
-      // ຖ້າໃກ້ໝົດລາຍການຄຳສັບໃນໂໝດເວລາ ໃຫ້ເພີ່ມອີກ
-      if (this.currentWordIdx >= this.wordsList.length - 10) {
-        const extra = [...LAO_WORDS[this.options.difficulty]].sort(() => 0.5 - Math.random());
-        for (const item of extra) {
-          this.wordsList.push(item.word);
-        }
-        this.appendExtraWords(extra.map(e => e.word));
-      }
-
-      // ໄຮໄລ້ຄຳຖັດໄປ
-      const nextWordEl = document.getElementById(`speed-word-${this.currentWordIdx}`);
-      if (nextWordEl) {
-        nextWordEl.classList.add('current');
-      }
-
-      this.renderWord(this.currentWordIdx);
-      this.scrollToCurrentWord();
-      if (this.options.onUpdate) {
-        this.options.onUpdate(this.getStats());
-      }
+      if (this.currentInput.length === 0) return;
+      this.advanceToNextWord();
       return;
     }
 
     // ກໍລະນີພິມຕົວອັກສອນ
     this.totalTypedChars++;
     this.currentInput += char;
-    const targetChar = currentWord[this.currentInput.length - 1];
 
-    if (char === targetChar) {
+    const normalizedInput = this.currentInput.normalize('NFC');
+    const normalizedTarget = currentWord.normalize('NFC');
+
+    // ກວດສອບວ່າພິມຖືກຕ້ອງຕາມລຳດັບຫຼືບໍ່
+    if (normalizedTarget.startsWith(normalizedInput)) {
       this.correctChars++;
       sounds.playCorrectChar();
     } else {
@@ -219,7 +236,6 @@ class SpeedTestGame {
       elapsedMin = Math.max((now - this.startTime) / 60000, 0.01);
     }
 
-    // WPM ມາດຕະຖານ: 5 ຕົວອັກສອນຖືກຕ້ອງ = 1 ຄຳ
     const wpm = Math.round((this.correctChars / 5) / elapsedMin);
     const cpm = Math.round(this.correctChars / elapsedMin);
     const totalTyped = this.correctChars + this.errorChars;
@@ -262,16 +278,16 @@ class SpeedTestGame {
     wordSpan.className = 'speed-word';
     wordSpan.id = `speed-word-${idx}`;
 
-    // ຊັ້ນທີ 1 (Base): ສະແດງຄຳສັບເຕັມ 100% ດ້ວຍສີມາດຕະຖານ (ບໍ່ແຍກ span ດ່ຽວ ເພື່ອບໍ່ໃຫ້ສະຫຼະຫຼຸດ)
+    // ຊັ້ນທີ 1 (Base): ຄຳສັບເຕັມສີເທົາ (ບໍ່ຕັດແຍກສະຫຼະ)
     const baseSpan = document.createElement('span');
     baseSpan.className = 'word-base';
     baseSpan.textContent = word;
     wordSpan.appendChild(baseSpan);
 
-    // ຊັ້ນທີ 2 (Overlay): ສະແດງສີໄຮໄລ້ຂຽວ/ຟ້າ ໂດຍໃຊ້ clip-path (ສະຫຼະ ແລະ ວັນນະຍຸດຢູ່ຕຳແໜ່ງເດີມສະເໝີ)
+    // ຊັ້ນທີ 2 (Overlay): ຂໍ້ຄວາມທີ່ພິມຖືກຕ້ອງ (ລົງສີເຕັມໂຕ ບໍ່ຕັດເຄິ່ງສະຫຼະ)
     const overlaySpan = document.createElement('span');
     overlaySpan.className = 'word-overlay';
-    overlaySpan.textContent = word;
+    overlaySpan.textContent = '';
     wordSpan.appendChild(overlaySpan);
 
     return wordSpan;
@@ -291,36 +307,34 @@ class SpeedTestGame {
     const wordEl = document.getElementById(`speed-word-${wordIdx}`);
     if (!wordEl) return;
 
-    const targetWord = this.wordsList[wordIdx] || '';
-    const input = this.currentInput;
+    const targetWord = (this.wordsList[wordIdx] || '').normalize('NFC');
+    const input = this.currentInput.normalize('NFC');
     const overlayEl = wordEl.querySelector('.word-overlay');
 
     wordEl.classList.remove('has-error');
 
     if (input.length === 0) {
       if (overlayEl) {
-        overlayEl.style.clipPath = 'inset(0 100% 0 0)';
+        overlayEl.textContent = '';
         overlayEl.className = 'word-overlay';
       }
       return;
     }
 
-    // ກວດສອບຄວາມຖືກຕ້ອງຂອງຄຳທີ່ກຳລັງພິມ
+    // ກວດສອບຄວາມຖືກຕ້ອງ
     const isPrefixMatch = targetWord.startsWith(input);
 
     if (isPrefixMatch) {
-      // ພິມຖືກຕ້ອງ -> ຄຳນວນເປີເຊັນແລ້ວ clip ສະເພາະສ່ວນທີ່ພິມແລ້ວ
-      const ratio = Math.min(1, input.length / targetWord.length);
-      const percent = Math.round(ratio * 100);
+      // ພິມຖືກຕ້ອງ -> ລົງສີສະເພາະສ່ວນທີ່ພິມຖືກເຕັມໂຕ 100%
       if (overlayEl) {
-        overlayEl.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+        overlayEl.textContent = input;
         overlayEl.className = 'word-overlay match';
       }
     } else {
-      // ພິມຜິດ -> ໄຮໄລ້ສີແດງເຕືອນ
+      // ພິມຜິດ -> ຂຶ້ນສີແດງເຕືອນ
       wordEl.classList.add('has-error');
       if (overlayEl) {
-        overlayEl.style.clipPath = 'inset(0 0 0 0)';
+        overlayEl.textContent = input;
         overlayEl.className = 'word-overlay error';
       }
     }

@@ -1,6 +1,6 @@
 /**
  * ໂໝດຝຶກແປ້ນພິມ ແລະ ຕຳແໜ່ງນິ້ວມື (Keyboard Layout & Finger Trainer)
- * ປັບປຸງການສະແດງຜົນພາສາລາວເຕັມຄຳ ປ້ອງກັນສະຫຼະ ແລະ ວັນນະຍຸດເລື່ອນຫຼຸດ
+ * ປັບປຸງການລົງສີເຕັມໂຕ 100% ແຍກລະຫວ່າງພະຍັນຊະນະ ແລະ ສະຫຼະ ພ້ອມປຸ່ມ Tab ເລື່ອນຄຳສັບ
  */
 
 class KeyboardTrainer {
@@ -46,7 +46,7 @@ class KeyboardTrainer {
   getCurrentTarget() {
     const wordObj = this.currentList[this.wordIdx];
     if (!wordObj) return null;
-    const word = wordObj.word;
+    const word = wordObj.word.normalize('NFC');
     const targetChar = word[this.charIdx];
     return {
       word: word,
@@ -57,12 +57,39 @@ class KeyboardTrainer {
     };
   }
 
+  // ເລື່ອນໄປຄຳສັບຖັດໄປ (ເມື່ອກົດ Tab)
+  advanceToNextWord() {
+    this.charIdx = 0;
+    this.wordIdx++;
+    sounds.playWordComplete();
+
+    if (this.wordIdx >= this.currentList.length) {
+      sounds.playGameOver(true);
+      if (this.options.onComplete) {
+        this.options.onComplete({
+          totalTyped: this.totalTyped,
+          accuracy: this.totalTyped > 0 ? Math.round((this.correctCount / this.totalTyped) * 100) : 100
+        });
+      }
+      return;
+    }
+
+    this.updateTarget();
+    if (this.options.onProgress) {
+      this.options.onProgress(this.getStats());
+    }
+  }
+
   handleInput(char) {
     const target = this.getCurrentTarget();
     if (!target) return;
 
     this.totalTyped++;
-    if (char === target.char) {
+
+    const normInput = char.normalize('NFC');
+    const normTarget = target.char.normalize('NFC');
+
+    if (normInput === normTarget) {
       this.correctCount++;
       sounds.playCorrectChar();
       this.charIdx++;
@@ -123,20 +150,21 @@ class KeyboardTrainer {
       }
     }
 
-    // ອັບເດດຂໍ້ຄວາມແນະນຳເທິງ UI ໂດຍໃຊ້ສອງ layer (ຄຳສັບເຕັມ 100% ບໍ່ຕັດແຍກສະຫຼະ)
+    // ອັບເດດຂໍ້ຄວາມແນະນຳເທິງ UI ໂດຍລົງສີເຕັມໂຕ ບໍ່ຕັດສະຫຼະ
     const targetDisplay = document.getElementById('trainer-target-word');
     const fingerDisplay = document.getElementById('trainer-finger-hint');
     const shiftBadge = document.getElementById('trainer-shift-badge');
 
     if (targetDisplay) {
       const word = target.word;
-      const progressRatio = Math.min(1, this.charIdx / word.length);
-      const percent = Math.round(progressRatio * 100);
+      const typedPart = word.substring(0, this.charIdx);
 
+      // ຊັ້ນທີ 1 (Base): ຄຳສັບເຕັມສີເທົາ
+      // ຊັ້ນທີ 2 (Overlay): ສ່ວນທີ່ພິມຖືກແລ້ວສີຟ້າເຕັມໂຕ 100% ບໍ່ຕັດເຄິ່ງສະຫຼະ
       targetDisplay.innerHTML = `
-        <div class="trainer-word-display">
+        <div class="trainer-word-display" id="trainer-display-box">
           <span class="trainer-word-base">${word}</span>
-          <span class="trainer-word-overlay" style="clip-path: inset(0 ${100 - percent}% 0 0);">${word}</span>
+          <span class="trainer-word-overlay">${typedPart}</span>
         </div>
       `;
     }
@@ -157,6 +185,14 @@ class KeyboardTrainer {
   flashErrorKey() {
     const target = this.getCurrentTarget();
     if (!target) return;
+
+    // ສັ່ນ ແລະ ຂຶ້ນສີແດງຢູ່ຄຳສັບເປົ້າໝາຍ
+    const displayBox = document.getElementById('trainer-display-box');
+    if (displayBox) {
+      displayBox.classList.add('has-error');
+      setTimeout(() => displayBox.classList.remove('has-error'), 350);
+    }
+
     const keyInfo = getKeyboardInfoForChar(target.char);
     if (keyInfo) {
       const keyEl = document.querySelector(`.key[data-code="${keyInfo.code}"]`);

@@ -352,17 +352,19 @@ header {
   position: absolute;
   top: 0.15rem;
   left: 0.5rem;
-  right: 0.5rem;
   color: var(--text-main);
   display: inline-block;
   letter-spacing: normal !important;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.05s ease;
   pointer-events: none;
+  white-space: nowrap;
 }
 
 .speed-word .word-overlay.match {
   color: #38bdf8;
+}
+
+.speed-word .word-overlay.error {
+  color: var(--error);
 }
 
 .speed-word.current {
@@ -462,12 +464,16 @@ header {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
   color: var(--accent);
   display: inline-block;
   letter-spacing: normal !important;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.08s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.trainer-word-display.has-error .trainer-word-overlay {
+  color: var(--error);
+  animation: wordShake 0.25s ease-in-out;
 }
 
 .trainer-meta-info {

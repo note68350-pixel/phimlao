@@ -1,13 +1,14 @@
 /**
  * ລະບົບຄວບຄຸມຫຼັກຂອງເວັບເກມ "ພີມລາວ" (PhimLao Controller)
- * ຮອງຮັບການສະຫຼັບ Shift Mode ແບບ Dynamic ເທິງແປ້ນພິມສະເໝືອນ
+ * ຜັງແປ້ນພິມມາດຕະຖານແທ້ 100% ພ້ອມ ຫຼ, ໜ, ໝ, ຣ, ຽ, ຼ, ₭, ໆ, ຯ, ໊, ໋, ໌
+ * ຮອງຮັບ Shift Dynamic, ປຸ່ມ Tab ເລື່ອນຄຳສັບ, ແລະ ແປງປຸ່ມ QWERTY ອັດຕະໂນມັດ
  */
 
 class PhimLaoApp {
   constructor() {
     this.currentMode = 'speed'; // 'speed' | 'arcade' | 'trainer'
     this.difficulty = 'easy';
-    this.autoTranslateLao = false; // ແປງປຸ່ມ QWERTY ເປັນລາວອັດຕະໂນມັດ
+    this.autoTranslateLao = true; // ເປີດແປງປຸ່ມ QWERTY -> ລາວ ອັດຕະໂນມັດເປັນຄ່າເລີ່ມຕົ້ນ
     this.showKeyboard = true;
     this.isShiftActive = false; // ສະຖານະການກົດປຸ່ມ Shift
 
@@ -44,113 +45,65 @@ class PhimLaoApp {
   initVirtualKeyboard() {
     if (!this.virtualKeyboardEl) return;
 
-    const keyboardRows = [
+    const rowCodes = [
       // Row 0
-      [
-        { code: 'Backquote', qwerty: '`', normal: '`', shift: '~', finger: 'l-pinky' },
-        { code: 'Digit1', qwerty: '1', normal: '1', shift: 'ຢ', finger: 'l-pinky' },
-        { code: 'Digit2', qwerty: '2', normal: '2', shift: 'ຟ', finger: 'l-ring' },
-        { code: 'Digit3', qwerty: '3', normal: '3', shift: 'ໂ', finger: 'l-mid' },
-        { code: 'Digit4', qwerty: '4', normal: '4', shift: 'ຖ', finger: 'l-index' },
-        { code: 'Digit5', qwerty: '5', normal: '5', shift: 'ຸ', finger: 'l-index' },
-        { code: 'Digit6', qwerty: '6', normal: '6', shift: 'ູ', finger: 'r-index' },
-        { code: 'Digit7', qwerty: '7', normal: '7', shift: 'ຄ', finger: 'r-index' },
-        { code: 'Digit8', qwerty: '8', normal: '8', shift: 'ຕ', finger: 'r-mid' },
-        { code: 'Digit9', qwerty: '9', normal: '9', shift: 'ຈ', finger: 'r-ring' },
-        { code: 'Digit0', qwerty: '0', normal: '0', shift: 'ຂ', finger: 'r-pinky' },
-        { code: 'Minus', qwerty: '-', normal: '-', shift: 'ຊ', finger: 'r-pinky' },
-        { code: 'Equal', qwerty: '=', normal: '=', shift: 'ໍ', finger: 'r-pinky' },
-        { code: 'Backspace', qwerty: 'Bksp', normal: 'Bksp', shift: 'Bksp', width: 'w-backspace', finger: 'r-pinky' }
-      ],
+      ['Backquote', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal', 'Backspace'],
       // Row 1
-      [
-        { code: 'Tab', qwerty: 'Tab', normal: 'Tab', shift: 'Tab', width: 'w-tab', finger: 'l-pinky' },
-        { code: 'KeyQ', qwerty: 'Q', normal: 'ົ', shift: 'ົ້', finger: 'l-pinky' },
-        { code: 'KeyW', qwerty: 'W', normal: 'ໄ', shift: '0', finger: 'l-ring' },
-        { code: 'KeyE', qwerty: 'E', normal: 'ຳ', shift: '*', finger: 'l-mid' },
-        { code: 'KeyR', qwerty: 'R', normal: 'ພ', shift: '_', finger: 'l-index' },
-        { code: 'KeyT', qwerty: 'T', normal: 'ະ', shift: '+', finger: 'l-index' },
-        { code: 'KeyY', qwerty: 'Y', normal: 'ິ', shift: 'ິ້', finger: 'r-index' },
-        { code: 'KeyU', qwerty: 'U', normal: 'ີ', shift: 'ີ້', finger: 'r-index' },
-        { code: 'KeyI', qwerty: 'I', normal: 'ຮ', shift: 'ຣ', finger: 'r-mid' },
-        { code: 'KeyO', qwerty: 'O', normal: 'ນ', shift: 'ໜ', finger: 'r-ring' },
-        { code: 'KeyP', qwerty: 'P', normal: 'ຍ', shift: 'ຽ', finger: 'r-pinky' },
-        { code: 'BracketLeft', qwerty: '[', normal: 'ບ', shift: '{', finger: 'r-pinky' },
-        { code: 'BracketRight', qwerty: ']', normal: 'ລ', shift: '}', finger: 'r-pinky' },
-        { code: 'Backslash', qwerty: '\\', normal: '\\', shift: '|', finger: 'r-pinky' }
-      ],
+      ['Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight', 'Backslash'],
       // Row 2
-      [
-        { code: 'CapsLock', qwerty: 'Caps', normal: 'Caps', shift: 'Caps', width: 'w-caps', finger: 'l-pinky' },
-        { code: 'KeyA', qwerty: 'A', normal: 'ັ', shift: 'ັ້', finger: 'l-pinky' },
-        { code: 'KeyS', qwerty: 'S', normal: 'ຫ', shift: ';', finger: 'l-ring' },
-        { code: 'KeyD', qwerty: 'D', normal: 'ກ', shift: '.', finger: 'l-mid' },
-        { code: 'KeyF', qwerty: 'F', normal: 'ດ', shift: ',', finger: 'l-index' },
-        { code: 'KeyG', qwerty: 'G', normal: 'ເ', shift: ':', finger: 'l-index' },
-        { code: 'KeyH', qwerty: 'H', normal: '້', shift: '໊', finger: 'r-index' },
-        { code: 'KeyJ', qwerty: 'J', normal: '່', shift: '໋', finger: 'r-index' },
-        { code: 'KeyK', qwerty: 'K', normal: 'າ', shift: '!', finger: 'r-mid' },
-        { code: 'KeyL', qwerty: 'L', normal: 'ສ', shift: '?', finger: 'r-ring' },
-        { code: 'Semicolon', qwerty: ';', normal: 'ວ', shift: '"', finger: 'r-pinky' },
-        { code: 'Quote', qwerty: '\'', normal: 'ງ', shift: '\'', finger: 'r-pinky' },
-        { code: 'Enter', qwerty: 'Enter', normal: 'Enter', shift: 'Enter', width: 'w-enter', finger: 'r-pinky' }
-      ],
+      ['CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'],
       // Row 3
-      [
-        { code: 'ShiftLeft', qwerty: 'Shift', normal: 'Shift', shift: 'Shift', width: 'w-shift', finger: 'l-pinky' },
-        { code: 'KeyZ', qwerty: 'Z', normal: 'ຜ', shift: '₭', finger: 'l-pinky' },
-        { code: 'KeyX', qwerty: 'X', normal: 'ປ', shift: '(', finger: 'l-ring' },
-        { code: 'KeyC', qwerty: 'C', normal: 'ແ', shift: 'ຯ', finger: 'l-mid' },
-        { code: 'KeyV', qwerty: 'V', normal: 'ອ', shift: 'x', finger: 'l-index' },
-        { code: 'KeyB', qwerty: 'B', normal: 'ຶ', shift: 'ຶ້', finger: 'l-index' },
-        { code: 'KeyN', qwerty: 'N', normal: 'ື', shift: 'ື້', finger: 'r-index' },
-        { code: 'KeyM', qwerty: 'M', normal: 'ທ', shift: 'ໆ', finger: 'r-index' },
-        { code: 'Comma', qwerty: ',', normal: 'ມ', shift: 'ໝ', finger: 'r-mid' },
-        { code: 'Period', qwerty: '.', normal: 'ໃ', shift: '$', finger: 'r-ring' },
-        { code: 'Slash', qwerty: '/', normal: 'ຝ', shift: ')', finger: 'r-pinky' },
-        { code: 'ShiftRight', qwerty: 'Shift', normal: 'Shift', shift: 'Shift', width: 'w-shift', finger: 'r-pinky' }
-      ],
+      ['ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'ShiftRight'],
       // Row 4
-      [
-        { code: 'Space', qwerty: 'Space', normal: ' ', shift: ' ', width: 'w-space', finger: 'thumb' }
-      ]
+      ['Space']
     ];
 
+    const specialLabels = {
+      'Backspace': { qwerty: 'Bksp', width: 'w-backspace', label: 'Bksp ⌫' },
+      'Tab': { qwerty: 'Tab', width: 'w-tab', label: 'Tab ⇥' },
+      'CapsLock': { qwerty: 'Caps', width: 'w-caps', label: 'Caps ⇪' },
+      'Enter': { qwerty: 'Enter', width: 'w-enter', label: 'Enter ↵' },
+      'ShiftLeft': { qwerty: 'Shift', width: 'w-shift', label: 'Shift ⇧' },
+      'ShiftRight': { qwerty: 'Shift', width: 'w-shift', label: 'Shift ⇧' },
+      'Space': { qwerty: 'Space', width: 'w-space', label: 'ຍະຫວ່າງ (Spacebar)' }
+    };
+
     this.virtualKeyboardEl.innerHTML = '';
-    keyboardRows.forEach(row => {
+    rowCodes.forEach(row => {
       const rowDiv = document.createElement('div');
       rowDiv.className = 'kb-row';
 
-      row.forEach(k => {
+      row.forEach(code => {
+        const special = specialLabels[code];
+        const layoutInfo = LAO_KEYBOARD_LAYOUT[code] || {};
         const keyBtn = document.createElement('button');
         keyBtn.type = 'button';
-        keyBtn.className = `key finger-${k.finger} ${k.width || ''}`;
-        keyBtn.dataset.code = k.code;
-        keyBtn.dataset.normal = k.normal;
-        keyBtn.dataset.shift = k.shift;
+        keyBtn.className = `key finger-${layoutInfo.finger || 'r-pinky'} ${special ? special.width : ''}`;
+        keyBtn.dataset.code = code;
+        keyBtn.dataset.normal = layoutInfo.normal || (special ? special.qwerty : '');
+        keyBtn.dataset.shift = layoutInfo.shift || layoutInfo.normal || '';
 
-        if (['Bksp', 'Tab', 'Caps', 'Enter'].includes(k.normal)) {
-          keyBtn.innerHTML = `<span class="key-special">${k.qwerty}</span>`;
-        } else if (k.code === 'ShiftLeft' || k.code === 'ShiftRight') {
-          keyBtn.innerHTML = `<span class="key-special">Shift ⇧</span>`;
-        } else if (k.code === 'Space') {
-          keyBtn.innerHTML = `<span class="key-special">ຍະຫວ່າງ (Spacebar)</span>`;
+        if (special) {
+          keyBtn.innerHTML = `<span class="key-special">${special.label}</span>`;
         } else {
           keyBtn.innerHTML = `
-            <span class="key-shift">${k.shift !== k.normal ? k.shift : ''}</span>
-            <span class="key-normal">${k.normal}</span>
-            <span class="key-qwerty">${k.qwerty}</span>
+            <span class="key-shift">${layoutInfo.shift !== layoutInfo.normal ? layoutInfo.shift : ''}</span>
+            <span class="key-normal">${layoutInfo.normal}</span>
+            <span class="key-qwerty">${layoutInfo.qwerty || ''}</span>
           `;
         }
 
-        // ຮອງຮັບການກົດປຸ່ມເທິງໜ້າຈໍສຳລັບ Mobile / Touch
         keyBtn.addEventListener('click', (e) => {
           e.preventDefault();
-          if (k.code === 'ShiftLeft' || k.code === 'ShiftRight') {
+          if (code === 'ShiftLeft' || code === 'ShiftRight') {
             this.setShiftState(!this.isShiftActive);
             return;
           }
-          this.handleVirtualKeyPress(k);
+          this.handleVirtualKeyPress({
+            code: code,
+            normal: layoutInfo.normal || '',
+            shift: layoutInfo.shift || ''
+          });
         });
 
         rowDiv.appendChild(keyBtn);
@@ -183,7 +136,7 @@ class PhimLaoApp {
       const normalSpan = keyEl.querySelector('.key-normal');
       const shiftSpan = keyEl.querySelector('.key-shift');
 
-      if (normalSpan && shiftSpan && shift !== normal) {
+      if (normalSpan && shiftSpan && shift && shift !== normal) {
         if (isShift) {
           normalSpan.textContent = shift;
           shiftSpan.textContent = normal;
@@ -262,9 +215,11 @@ class PhimLaoApp {
       });
     }
 
-    // Auto-Translate Lao Keyboard Toggle (ສຳລັບຄອມທີ່ບໍ່ມີຄີບອດລາວ)
+    // Auto-Translate Lao Keyboard Toggle
     const autoTranslateToggle = document.getElementById('auto-translate-toggle');
     if (autoTranslateToggle) {
+      autoTranslateToggle.textContent = '🇱🇦 ແປ້ນພິມ: ອັດຕະໂນມັດ (ເປີດ)';
+      autoTranslateToggle.classList.add('active');
       autoTranslateToggle.addEventListener('click', () => {
         this.autoTranslateLao = !this.autoTranslateLao;
         autoTranslateToggle.classList.toggle('active', this.autoTranslateLao);
@@ -326,7 +281,6 @@ class PhimLaoApp {
   }
 
   handleKeyDown(e) {
-    // ຍົກເວັ້ນປຸ່ມຄວບຄຸມລະບົບ
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key === 'Shift') {
@@ -334,7 +288,19 @@ class PhimLaoApp {
       return;
     }
 
+    // ປຸ່ມ Tab: ເລື່ອນໄປຄຳສັບຖັດໄປ (Skip / Advance to next word)
     if (e.key === 'Tab') {
+      e.preventDefault();
+      if (this.currentMode === 'speed') {
+        this.speedGame.advanceToNextWord();
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.advanceToNextWord();
+      }
+      return;
+    }
+
+    // ປຸ່ມ Escape: ເລີ່ມເກມໃໝ່
+    if (e.key === 'Escape') {
       e.preventDefault();
       this.restartCurrentGame();
       return;
@@ -349,8 +315,8 @@ class PhimLaoApp {
 
     let char = e.key;
 
-    // ຖ້າເປີດໂໝດ Auto-Translate Lao (ພິມ QWERTY ແລ້ວແປງເປັນ Saysettha Lao)
-    if (this.autoTranslateLao) {
+    // ຖ້າບໍ່ແມ່ນຕົວອັກສອນລາວ (ກົດປຸ່ມ QWERTY ອັງກິດ) ໃຫ້ແປງເປັນພາສາລາວອັດຕະໂນມັດ
+    if (!isValidLaoChar(char)) {
       const translated = translatePhysicalKeyToLao(e.code, e.shiftKey || this.isShiftActive);
       if (translated) {
         char = translated;
@@ -368,17 +334,17 @@ class PhimLaoApp {
     if (e.key === ' ' || e.code === 'Space') {
       e.preventDefault();
       if (this.currentMode === 'speed') {
-        this.speedGame.handleInput('', false, true);
+        this.speedGame.advanceToNextWord();
       } else if (this.currentMode === 'arcade') {
         this.arcadeGame.handleInput(' ');
       } else if (this.currentMode === 'trainer') {
-        this.trainerGame.handleInput(' ');
+        this.trainerGame.advanceToNextWord();
       }
       return;
     }
 
-    // ຖ້າເປັນຕົວອັກສອນດ່ຽວ
-    if (char && char.length === 1 && isValidLaoChar(char)) {
+    // ຖ້າເປັນຕົວອັກສອນລາວ (ຮອງຮັບທັງຕົວດ່ຽວ ແລະ ຕົວປະສົມ shift ເຊັ່ນ ຫຼ, ົ້, ິ້)
+    if (char && (isValidLaoChar(char[0]) || char === 'ຫຼ')) {
       this.routeCharacterInput(char);
     }
   }
@@ -399,24 +365,29 @@ class PhimLaoApp {
       }
     } else if (char === ' ') {
       if (this.currentMode === 'speed') {
-        this.speedGame.handleInput('', false, true);
+        this.speedGame.advanceToNextWord();
       } else if (this.currentMode === 'arcade') {
         this.arcadeGame.handleInput(' ');
       } else if (this.currentMode === 'trainer') {
-        this.trainerGame.handleInput(' ');
+        this.trainerGame.advanceToNextWord();
       }
-    } else if (char && char.length === 1) {
+    } else if (char) {
       this.routeCharacterInput(char);
     }
   }
 
   routeCharacterInput(char) {
-    if (this.currentMode === 'speed') {
-      this.speedGame.handleInput(char);
-    } else if (this.currentMode === 'arcade') {
-      this.arcadeGame.handleInput(char);
-    } else if (this.currentMode === 'trainer') {
-      this.trainerGame.handleInput(char);
+    if (!char) return;
+    // ຮອງຮັບຕົວອັກສອນປະສົມເຊັ່ນ ຫຼ, ົ້, ິ້, ີ້
+    for (let i = 0; i < char.length; i++) {
+      const ch = char[i];
+      if (this.currentMode === 'speed') {
+        this.speedGame.handleInput(ch);
+      } else if (this.currentMode === 'arcade') {
+        this.arcadeGame.handleInput(ch);
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.handleInput(ch);
+      }
     }
   }
 
@@ -432,7 +403,7 @@ class PhimLaoApp {
     document.getElementById('stats-arcade-bar').style.display = (mode === 'arcade') ? 'flex' : 'none';
     document.getElementById('stats-trainer-bar').style.display = (mode === 'trainer') ? 'flex' : 'none';
 
-    // ເມື່ອສະຫຼັບໄປໂໝດ Arcade: ຕ້ອງໃຫ້ Canvas resize ຫຼັງຈາກ panel ສະແດງແລ້ວ
+    // ເມື່ອສະຫຼັບໄປໂໝດ Arcade
     if (mode === 'arcade') {
       setTimeout(() => {
         this.arcadeGame.resizeCanvas();

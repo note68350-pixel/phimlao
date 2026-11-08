@@ -11,6 +11,7 @@ class PhimLaoApp {
     this.autoTranslateLao = true; // ເປີດແປງປຸ່ມ QWERTY -> ລາວ ອັດຕະໂນມັດເປັນຄ່າເລີ່ມຕົ້ນ
     this.showKeyboard = true;
     this.isShiftActive = false; // ສະຖານະການກົດປຸ່ມ Shift
+    this.lastProcessedTime = 0; // ປ້ອງກັນການກົດຊ້ຳ 2 ຄັ້ງ (Duplicate Event Guard)
 
     this.speedGame = null;
     this.arcadeGame = null;
@@ -258,22 +259,45 @@ class PhimLaoApp {
     window.addEventListener('keyup', (e) => this.handleKeyUp(e));
     window.addEventListener('blur', () => this.setShiftState(false));
 
-    // Focus mobile input on tap to show mobile keyboard
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('button, input, select, textarea, a')) {
-        if (this.mobileInput) {
-          this.mobileInput.focus();
-        }
-      }
-    });
+    // Focus mobile input ONLY on touch/mobile devices
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+      || (navigator.maxTouchPoints > 1 && window.innerWidth <= 1024);
 
-    // Mobile input sink listener
+    if (isMobileDevice) {
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('button, input, select, textarea, a, .key')) {
+          if (this.mobileInput) {
+            this.mobileInput.focus();
+          }
+        }
+      });
+    }
+
+    // Mobile input sink listener (with duplicate suppression)
     if (this.mobileInput) {
+      this.mobileInput.addEventListener('beforeinput', (e) => {
+        if (e.inputType === 'deleteContentBackward') {
+          if (Date.now() - this.lastProcessedTime < 80) return;
+          this.lastProcessedTime = Date.now();
+          if (this.currentMode === 'speed') {
+            this.speedGame.handleInput('', true, false);
+          } else if (this.currentMode === 'trainer') {
+            this.trainerGame.handleBackspace();
+          }
+        }
+      });
+
       this.mobileInput.addEventListener('input', (e) => {
+        // ຫາກ event ນີ້ເກີດພາຍຫຼັງ keydown ບໍ່ເກີນ 80ms ໃຫ້ຂ້າມທັນທີ (ປ້ອງກັນພິມ 1 ໂຕ ອອກ 2 ໂຕ)
+        if (Date.now() - this.lastProcessedTime < 80) {
+          this.mobileInput.value = '';
+          return;
+        }
+
         const val = this.mobileInput.value;
-        if (val.length > 0) {
-          const char = val[val.length - 1];
-          this.routeCharacterInput(char);
+        if (val && val.length > 0) {
+          this.lastProcessedTime = Date.now();
+          this.routeCharacterInput(val);
           this.mobileInput.value = '';
         }
       });
@@ -291,8 +315,9 @@ class PhimLaoApp {
     // ປຸ່ມ Tab: ເລື່ອນໄປຄຳສັບຖັດໄປ (Skip / Advance to next word)
     if (e.key === 'Tab') {
       e.preventDefault();
+      this.lastProcessedTime = Date.now();
       if (this.currentMode === 'speed') {
-        this.speedGame.advanceToNextWord();
+        this.speedGame.advanceToNextWord(true);
       } else if (this.currentMode === 'trainer') {
         this.trainerGame.advanceToNextWord();
       }
@@ -302,7 +327,34 @@ class PhimLaoApp {
     // ປຸ່ມ Escape: ເລີ່ມເກມໃໝ່
     if (e.key === 'Escape') {
       e.preventDefault();
+      this.lastProcessedTime = Date.now();
       this.restartCurrentGame();
+      return;
+    }
+
+    // ປຸ່ມ Backspace
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      this.lastProcessedTime = Date.now();
+      if (this.currentMode === 'speed') {
+        this.speedGame.handleInput('', true, false);
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.handleBackspace();
+      }
+      return;
+    }
+
+    // ປຸ່ມ Spacebar
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      this.lastProcessedTime = Date.now();
+      if (this.currentMode === 'speed') {
+        this.speedGame.advanceToNextWord(false);
+      } else if (this.currentMode === 'arcade') {
+        this.arcadeGame.handleInput(' ');
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.advanceToNextWord();
+      }
       return;
     }
 
@@ -315,36 +367,20 @@ class PhimLaoApp {
 
     let char = e.key;
 
-    // ຖ້າບໍ່ແມ່ນຕົວອັກສອນລາວ (ກົດປຸ່ມ QWERTY ອັງກິດ) ໃຫ້ແປງເປັນພາສາລາວອັດຕະໂນມັດ
-    if (!isValidLaoChar(char)) {
-      const translated = translatePhysicalKeyToLao(e.code, e.shiftKey || this.isShiftActive);
-      if (translated) {
-        char = translated;
+    // ຖ້າບໍ່ແມ່ນຕົວອັກສອນລາວແທ້ (ກົດປຸ່ມ QWERTY ອັງກິດ) ໃຫ້ແປງເປັນພາສາລາວອັດຕະໂນມັດ ເມື່ອເປີດ autoTranslateLao
+    if (!isNativeLaoChar(char)) {
+      if (this.autoTranslateLao) {
+        const translated = translatePhysicalKeyToLao(e.code, e.shiftKey || this.isShiftActive);
+        if (translated) {
+          char = translated;
+        }
       }
     }
 
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      if (this.currentMode === 'speed') {
-        this.speedGame.handleInput('', true, false);
-      }
-      return;
-    }
-
-    if (e.key === ' ' || e.code === 'Space') {
-      e.preventDefault();
-      if (this.currentMode === 'speed') {
-        this.speedGame.advanceToNextWord();
-      } else if (this.currentMode === 'arcade') {
-        this.arcadeGame.handleInput(' ');
-      } else if (this.currentMode === 'trainer') {
-        this.trainerGame.advanceToNextWord();
-      }
-      return;
-    }
-
-    // ຖ້າເປັນຕົວອັກສອນລາວ (ຮອງຮັບທັງຕົວດ່ຽວ ແລະ ຕົວປະສົມ shift ເຊັ່ນ ຫຼ, ົ້, ິ້)
+    // ຖ້າເປັນຕົວອັກສອນລາວ ຫຼື ຕົວອັກສອນທີ່ຮອງຮັບ (ຮອງຮັບທັງຕົວດ່ຽວ ແລະ ຕົວປະສົມ shift ເຊັ່ນ ຫຼ, ົ້, ິ້)
     if (char && (isValidLaoChar(char[0]) || char === 'ຫຼ')) {
+      e.preventDefault();
+      this.lastProcessedTime = Date.now();
       this.routeCharacterInput(char);
     }
   }
@@ -362,16 +398,19 @@ class PhimLaoApp {
     if (char === 'Bksp') {
       if (this.currentMode === 'speed') {
         this.speedGame.handleInput('', true, false);
+      } else if (this.currentMode === 'trainer') {
+        this.trainerGame.handleBackspace();
       }
     } else if (char === ' ') {
       if (this.currentMode === 'speed') {
-        this.speedGame.advanceToNextWord();
+        this.speedGame.advanceToNextWord(false);
       } else if (this.currentMode === 'arcade') {
         this.arcadeGame.handleInput(' ');
       } else if (this.currentMode === 'trainer') {
         this.trainerGame.advanceToNextWord();
       }
     } else if (char) {
+      this.lastProcessedTime = Date.now();
       this.routeCharacterInput(char);
     }
   }

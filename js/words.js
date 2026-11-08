@@ -377,13 +377,24 @@ const LAO_WORDS = {
   ]
 };
 
-// ກວດສອບສະເພາະຕົວອັກສອນລາວ Unicode (U+0EB0 - U+0EDF)
-function isValidLaoChar(char) {
+// ກວດສອບສະເພາະຕົວອັກສອນລາວແທ້ Unicode (U+0E80 - U+0EFF) ແລະ ສັນຍະລັກເງິນກີບ (₭ U+20AD)
+function isNativeLaoChar(char) {
+  if (!char) return false;
   const code = char.charCodeAt(0);
-  // Lao range: 0x0E80 - 0x0EFF, space (0x20), standard punctuation
-  return (code >= 0x0E80 && code <= 0x0EFF) || code === 0x20 || [44, 46, 33, 63, 40, 41, 45].includes(code);
+  return (code >= 0x0E80 && code <= 0x0EFF) || code === 0x20AD;
+}
+
+// ກວດສອບຕົວອັກສອນທີ່ຮອງຮັບເທິງແປ້ນພິມລາວ (ລວມທັງຕົວເລກ, ເຄື່ອງໝາຍ, ແລະ ຍະຫວ່າງ)
+function isValidLaoChar(char) {
+  if (!char) return false;
+  const code = char.charCodeAt(0);
+  if (code >= 0x0E80 && code <= 0x0EFF) return true;
+  if (code === 0x20AD) return true; // ₭
+  if (code === 0x20) return true;   // space
+  if (code >= 33 && code <= 126) return true; // punctuation and numbers
+  return false;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isValidLaoChar };
+  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar };
 }

@@ -80,6 +80,15 @@ class KeyboardTrainer {
     }
   }
 
+  // ລຶບຍ້ອນຫຼັງ 1 ຕົວອັກສອນ (ເມື່ອກົດ Backspace)
+  handleBackspace() {
+    if (this.charIdx > 0) {
+      this.charIdx--;
+      this.updateTarget();
+      sounds.playKeyClick();
+    }
+  }
+
   handleInput(char) {
     const target = this.getCurrentTarget();
     if (!target) return;

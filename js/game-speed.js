@@ -117,9 +117,14 @@ class SpeedTestGame {
   }
 
   // ເລື່ອນໄປຄຳສັບຖັດໄປ (ເມື່ອກົດ Space ຫຼື Tab)
-  advanceToNextWord() {
+  advanceToNextWord(isSkip = false) {
     if (this.isFinished) return;
     if (!this.isActive) this.start();
+
+    // ຫາກຍັງບໍ່ທັນພິມຫຍັງ ແລະ ບໍ່ແມ່ນການກົດ Tab (ຂ້າມຄຳ) ໃຫ້ຢູ່ຄຳເດີມ
+    if (!isSkip && this.currentInput.length === 0) {
+      return;
+    }
 
     const currentWord = this.wordsList[this.currentWordIdx];
     if (!currentWord) return;
@@ -194,7 +199,11 @@ class SpeedTestGame {
 
     if (isBackspace) {
       if (this.currentInput.length > 0) {
-        this.currentInput = this.currentInput.slice(0, -1);
+        if (this.currentInput.endsWith('ຫຼ')) {
+          this.currentInput = this.currentInput.slice(0, -2);
+        } else {
+          this.currentInput = this.currentInput.slice(0, -1);
+        }
         this.renderWord(this.currentWordIdx);
         sounds.playKeyClick();
       }

@@ -344,6 +344,7 @@ header {
   letter-spacing: normal !important;
   word-spacing: normal !important;
   transition: all 0.15s ease;
+  white-space: nowrap !important;
 }
 
 .speed-word .word-base {
@@ -353,6 +354,7 @@ header {
   letter-spacing: normal !important;
   font-size: 1.65rem;
   line-height: 1.6;
+  white-space: nowrap !important;
 }
 
 .speed-word.current {

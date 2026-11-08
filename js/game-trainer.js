@@ -136,7 +136,7 @@ class KeyboardTrainer {
 
     let isMatch = false;
 
-    // 0. ກໍລະນີ target ແມ່ນ ຫຼ (ຫຼື ຜູ້ໃຊ້ພິມ ຫຼ):
+    // 0. ກໍລະນີ target ແມ່ນ ຫຼ, ໝ, ໜ (ຫຼື ຜູ້ໃຊ້ພິມແຍກ ຫ+ລ, ຫ+ມ, ຫ+ນ):
     if (normTarget === 'ຫຼ') {
       if (normInput === 'ຫຼ' || canonicalizeLao(normInput) === 'ຫລ') {
         isMatch = true;
@@ -144,6 +144,22 @@ class KeyboardTrainer {
       } else if (normInput === 'ຫ') {
         isMatch = true;
         this.pendingSwapChar = 'ລ';
+      }
+    } else if (normTarget === 'ໝ') {
+      if (normInput === 'ໝ' || canonicalizeLao(normInput) === 'ຫມ') {
+        isMatch = true;
+        this.charIdx += 1;
+      } else if (normInput === 'ຫ') {
+        isMatch = true;
+        this.pendingSwapChar = 'ມ';
+      }
+    } else if (normTarget === 'ໜ') {
+      if (normInput === 'ໜ' || canonicalizeLao(normInput) === 'ຫນ') {
+        isMatch = true;
+        this.charIdx += 1;
+      } else if (normInput === 'ຫ') {
+        isMatch = true;
+        this.pendingSwapChar = 'ນ';
       }
     }
     // 1. ກວດສອບຖ້າມີ pendingSwapChar (ຜູ້ໃຊ້ພິມສະຫຼະ/ວັນນະຍຸດສະຫຼັບລຳດັບ)

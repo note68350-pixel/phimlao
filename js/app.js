@@ -118,7 +118,7 @@ class PhimLaoApp {
 
         keyBtn.addEventListener('click', (e) => {
           e.preventDefault();
-          if (code === 'ShiftLeft' || code === 'ShiftRight') {
+          if (code === 'ShiftLeft' || code === 'ShiftRight' || code === 'CapsLock') {
             this.setShiftState(!this.isShiftActive);
             return;
           }
@@ -392,7 +392,7 @@ class PhimLaoApp {
     if (this.mobileInput) {
       this.mobileInput.addEventListener('beforeinput', (e) => {
         if (e.inputType === 'deleteContentBackward') {
-          if (Date.now() - this.lastProcessedTime < 80) return;
+          if (Date.now() - this.lastProcessedTime < 250) return;
           this.lastProcessedTime = Date.now();
           if (this.currentMode === 'speed') {
             this.speedGame.handleInput('', true, false);
@@ -403,8 +403,8 @@ class PhimLaoApp {
       });
 
       this.mobileInput.addEventListener('input', (e) => {
-        // ຫາກ event ນີ້ເກີດພາຍຫຼັງ keydown ບໍ່ເກີນ 80ms ໃຫ້ຂ້າມທັນທີ (ປ້ອງກັນພິມ 1 ໂຕ ອອກ 2 ໂຕ)
-        if (Date.now() - this.lastProcessedTime < 80) {
+        // ຫາກ event ນີ້ເກີດພາຍຫຼັງ keydown ຫຼື virtual key ບໍ່ເກີນ 300ms ໃຫ້ຂ້າມທັນທີ (ປ້ອງກັນພິມ 1 ໂຕ ອອກ 2 ໂຕ ເຊັ່ນ ໝ ມ)
+        if (Date.now() - this.lastProcessedTime < 300) {
           this.mobileInput.value = '';
           return;
         }
@@ -421,6 +421,12 @@ class PhimLaoApp {
 
   handleKeyDown(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    // ຖ້າກຳລັງກົດປຸ່ມ Physical Keyboard, ໃຫ້ blur mobileInput ທັນທີ ເພື່ອປ້ອງກັນບໍ່ໃຫ້ຕົວອັກສອນເຂົ້າ mobileInput ຊ້ຳຊ້ອນ
+    if (this.mobileInput && document.activeElement === this.mobileInput) {
+      this.mobileInput.blur();
+      this.mobileInput.value = '';
+    }
 
     if (e.key === 'Shift') {
       this.setShiftState(true);
@@ -463,8 +469,11 @@ class PhimLaoApp {
     if (e.key === ' ' || e.code === 'Space') {
       e.preventDefault();
       this.lastProcessedTime = Date.now();
+      if (this.mobileInput) {
+        this.mobileInput.value = '';
+      }
       if (this.currentMode === 'speed') {
-        this.speedGame.advanceToNextWord(false);
+        this.speedGame.handleInput('', false, true);
       } else if (this.currentMode === 'arcade') {
         this.arcadeGame.handleInput(' ');
       } else if (this.currentMode === 'trainer') {
@@ -522,6 +531,9 @@ class PhimLaoApp {
     if (char && (isValidLaoChar(char[0]) || char === 'ຫຼ' || isNativeLaoChar(char))) {
       e.preventDefault();
       this.lastProcessedTime = Date.now();
+      if (this.mobileInput) {
+        this.mobileInput.value = '';
+      }
       this.routeCharacterInput(char);
     }
   }
@@ -537,6 +549,15 @@ class PhimLaoApp {
   }
 
   handleVirtualKeyPress(keyInfo) {
+    if (this.lastVirtualKeyPressTime && Date.now() - this.lastVirtualKeyPressTime < 120) {
+      return;
+    }
+    this.lastVirtualKeyPressTime = Date.now();
+    this.lastProcessedTime = Date.now();
+    if (this.mobileInput) {
+      this.mobileInput.value = '';
+    }
+
     sounds.playKeyClick();
     const char = this.isShiftActive ? keyInfo.shift : keyInfo.normal;
 
@@ -553,28 +574,26 @@ class PhimLaoApp {
       }
     } else if (char === ' ') {
       if (this.currentMode === 'speed') {
-        this.speedGame.advanceToNextWord(false);
+        this.speedGame.handleInput('', false, true);
       } else if (this.currentMode === 'arcade') {
         this.arcadeGame.handleInput(' ');
       } else if (this.currentMode === 'trainer') {
         this.trainerGame.advanceToNextWord();
       }
     } else if (char) {
-      this.lastProcessedTime = Date.now();
       this.routeCharacterInput(char);
     }
   }
 
   routeCharacterInput(char) {
     if (!char) return;
-    // ທຳຄວາມສະອາດຕົວອັກສອນ: ຕັດ ZWSP, NBSP, Dotted Circle ທີ່ອາດຕິດມານຳ Mobile IME
-    char = char.replace(/[\u00A0\u200B\u25CC]/g, '');
-    if (!char) return;
-
-    // ແປງຕົວອັກສອນໄທ/placeholder ໃຫ້ເປັນມາດຕະຖານລາວ
-    if (typeof canonicalizeLao === 'function') {
-      char = canonicalizeLao(char);
+    // ທຳຄວາມສະອາດຕົວອັກສອນ ແລະ ແປງຕົວອັກສອນໄທ/placeholder ໃຫ້ເປັນມາດຕະຖານລາວ (ບໍ່ແຍກຕົວປະສົມ ໝ, ໜ, ຫຼ ໃຫ້ແຕກເປັນ 2 ຕົວ)
+    if (typeof normalizeIncomingChar === 'function') {
+      char = normalizeIncomingChar(char);
+    } else {
+      char = char.replace(/[\u0020\u00A0\u200B\u25CC]/g, '');
     }
+    if (!char) return;
 
     if (this.currentMode === 'speed') {
       this.speedGame.handleInput(char);

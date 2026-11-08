@@ -133,7 +133,7 @@ const LAO_WORDS = {
     { word: "ໃຫຍ່", category: "ຄຸນນາມ", hint: "ຂະໜາດກວ້າງໂຕ" },
     { word: "ນ້ອຍ", category: "ຄຸນນາມ", hint: "ຂະໜາດຈ່ອຍສັ້ນ" },
     { word: "ສູງ", category: "ຄຸນນາມ", hint: "ໄລຍະຕັ້ງຂຶ້ນຫຼາຍ" },
-    { word: "ຕໍ່າ", category: "ຄຸນນາມ", hint: "ບໍ່ສູງ ຕິດພື້ນ" },
+    { word: "\u0E95\u0ECD\u0EC8\u0EB2", category: "ຄຸນນາມ", hint: "ບໍ່ສູງ ຕິດພື້ນ" },
     { word: "ຍາວ", category: "ຄຸນນາມ", hint: "ມີໄລຍະທາງໄກ" },
     { word: "ສັ້ນ", category: "ຄຸນນາມ", hint: "ມີໄລຍະບໍ່ໄກ" },
     { word: "ໄວ", category: "ຄຸນນາມ", hint: "ໃຊ້ເວລານ້ອຍ ວ່ອງໄວ" },
@@ -408,8 +408,11 @@ function canonicalizeLao(str) {
     const code = ch.charCodeAt(0);
     if (code >= 0x0E48 && code <= 0x0E4B) return String.fromCharCode(code + 0x80);
     if (code >= 0x0E30 && code <= 0x0E44) return String.fromCharCode(code + 0x80);
+    if (code === 0x0E4D) return '\u0ECD'; // ํ Thai Nikhahit -> Lao ໍ
     return ch;
   });
+  s = s.replace(/\u0E4D/g, '\u0ECD');
+  s = s.replace(/\u0E33/g, '\u0EB3');
 
   // 2. ຕັດ placeholder ຍະຫວ່າງ/NBSP/ZWSP/Dotted Circle ທີ່ມັກຕິດມານຳວັນນະຍຸດໃນ Mobile IME
   s = s.replace(/[\u0020\u00A0\u200B\u25CC]+/g, '');
@@ -424,19 +427,26 @@ function canonicalizeLao(str) {
   s = s.replace(/\u0ECA/g, '\u0EC9');
   s = s.replace(/\u0ECB/g, '\u0EC8');
 
-  // 5. ແປງທຸກຮູບແບບຂອງ ສະຫຼະ ອຳ (້ຳ, ຳ້, ໍ້າ, ໍ່ໍາ, ໍ-້-າ, ້-ໍ-າ) ໃຫ້ເປັນມາດຕະຖານດຽວກັນ: ໍ + ວັນນະຍຸດ + າ
+  // 5. ຈັດລຽງວັນນະຍຸດກັບ ນິຄະຫິດ ( ໍ ): ວັນນະຍຸດກ່ອນ ໍ -> ໍ ກ່ອນວັນນະຍຸດ (ເຊັ່ນ ້+ໍ -> ໍ້, ່+ໍ -> ໍ່)
+  s = s.replace(/([\u0EC8-\u0ECC])\u0ECD/g, '\u0ECD$1');
+
+  // 6. ແປງທຸກຮູບແບບຂອງ ສະຫຼະ ອຳ (້ຳ, ຳ້, ໍ້າ, ໍ່ໍາ, ໍ-້-າ, ້-ໍ-າ, ຳ) ໃຫ້ເປັນມາດຕະຖານດຽວກັນ: ໍ + ວັນນະຍຸດ + າ
   s = s.replace(/([\u0EC8-\u0ECC])\u0EB3/g, '\u0ECD$1\u0EB2');
   s = s.replace(/\u0EB3([\u0EC8-\u0ECC])/g, '\u0ECD$1\u0EB2');
   s = s.replace(/\u0EB3/g, '\u0ECD\u0EB2');
   s = s.replace(/([\u0EC8-\u0ECC])\u0ECD\u0EB2/g, '\u0ECD$1\u0EB2');
+  s = s.replace(/\u0ECD\u0EB2([\u0EC8-\u0ECC])/g, '\u0ECD$1\u0EB2');
 
-  // 6. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງ ສະຫຼະ ອາ (າ): ຊ-າ-້ -> ຊ-້-າ, ມ-າ-້ -> ມ-້-າ, ປ-າ-່ -> ປ-່-າ
+  // 7. ຮອງຮັບທັງ ຕ່ຳ (ຕ-່-ຳ, ຕ-ຳ-່) ແລະ ຕໍ່າ (ຕ-ໍ-່-າ)
+  s = s.replace(/ຕ\u0ECD?\u0EC8?\u0EB3\u0EC8?/g, 'ຕ\u0ECD\u0EC8\u0EB2');
+
+  // 8. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງ ສະຫຼະ ອາ (າ): ຊ-າ-້ -> ຊ-້-າ, ມ-າ-້ -> ມ-້-າ, ປ-າ-່ -> ປ-່-າ
   s = s.replace(/\u0EB2([\u0EC8-\u0ECC])/g, '$1\u0EB2');
 
-  // 7. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງຕົວສະກົດທ້າຍຄຳ: ຊ-າ-ງ-້ -> ຊ-້-າ-ງ, ບ-າ-ນ-້ -> ບ-້-າ-ນ, ຮ-າ-ນ-້ -> ຮ-້-າ-ນ
+  // 9. ຈັດລຽງວັນນະຍຸດທີ່ພິມຫຼັງຕົວສະກົດທ້າຍຄຳ: ຊ-າ-ງ-້ -> ຊ-້-າ-ງ, ບ-າ-ນ-້ -> ບ-້-າ-ນ, ຮ-າ-ນ-້ -> ຮ-້-າ-ນ
   s = s.replace(/([\u0E80-\u0EAE])\u0EB2([\u0E80-\u0EAE])([\u0EC8-\u0ECC])/g, '$1$3\u0EB2$2');
 
-  // 8. ຈັດລຽງວັນນະຍຸດ ແລະ ສະຫຼະເທິງອື່ນໆ: ສະຫຼະ + ວັນນະຍຸດ (ເຊັ່ນ ້ + ັ -> ັ້, ້ + ິ -> ິ້, ້ + ົ -> ົ້)
+  // 10. ຈັດລຽງວັນນະຍຸດ ແລະ ສະຫຼະເທິງອື່ນໆ: ສະຫຼະ + ວັນນະຍຸດ (ເຊັ່ນ ້ + ັ -> ັ້, ້ + ິ -> ິ້, ້ + ົ -> ົ້)
   s = s.replace(/([\u0EC8-\u0ECC])([\u0EB1\u0EB4-\u0EB9\u0EBB])/g, '$2$1');
 
   return s;
@@ -493,6 +503,37 @@ function getMatchedTargetPrefix(targetWord, typedInput) {
   return bestPrefix || targetWord.substring(0, Math.min(typedInput.length, targetWord.length));
 }
 
+/**
+ * ທຳຄວາມສະອາດ ແລະ ແປງຕົວອັກສອນທີ່ພິມເຂົ້າມາ (Single/Keystroke Normalization)
+ * ຮອງຮັບຕົວເລກ, ເຄື່ອງໝາຍ, ແປ້ນພິມໄທ, Shift+H/J ໂດຍບໍ່ແຍກຕົວປະສົມ ໝ, ໜ, ຫຼ ໃຫ້ເປັນສອງຕົວ
+ */
+function normalizeIncomingChar(char) {
+  if (!char) return '';
+  let s = char.replace(/[\u0020\u00A0\u200B\u25CC]/g, '');
+  if (!s) return '';
+
+  // 1. ແປງຕົວອັກສອນໄທເປັນລາວ
+  s = s.replace(/[\u0E01-\u0E5B]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    if (code >= 0x0E48 && code <= 0x0E4B) return String.fromCharCode(code + 0x80);
+    if (code >= 0x0E30 && code <= 0x0E44) return String.fromCharCode(code + 0x80);
+    if (code === 0x0E4D) return '\u0ECD';
+    return ch;
+  });
+  s = s.replace(/\u0E4D/g, '\u0ECD');
+  s = s.replace(/\u0E33/g, '\u0EB3');
+
+  // 2. ແປງ ໄມ້ຕີ (Shift+H ໊) ເປັນ ໄມ້ໂທ (້) ແລະ ໄມ້ຈັດຕະວາ (Shift+J ໋) ເປັນ ໄມ້ເອກ (່) ຫາກກົດ Shift ຄ້າງ
+  s = s.replace(/\u0ECA/g, '\u0EC9');
+  s = s.replace(/\u0ECB/g, '\u0EC8');
+
+  return s;
+}
+
+if (typeof window !== 'undefined') {
+  window.normalizeIncomingChar = normalizeIncomingChar;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, isLaoPrefixMatch, getMatchedTargetPrefix };
+  module.exports = { LAO_WORDS, isNativeLaoChar, isValidLaoChar, canonicalizeLao, isLaoPrefixMatch, getMatchedTargetPrefix, normalizeIncomingChar };
 }

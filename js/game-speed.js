@@ -84,7 +84,15 @@ class SpeedTestGame {
     while (this.wordsList.length < count) {
       for (const item of shuffled) {
         if (this.wordsList.length >= count) break;
-        this.wordsList.push(item.word.normalize('NFC'));
+        // ແຍກຄຳສັບຍາວ ຫຼື ສຸພາສິດທີ່ມີຍະຫວ່າງ ອອກເປັນຄຳຍ່ອຍ ເພື່ອໃຫ້ພິມ ແລະ ສະແດງຜົນສະອາດຕາ ບໍ່ລົ້ນແຖວ
+        const norm = item.word.normalize('NFC').trim();
+        const tokens = norm.split(/\s+/);
+        for (const token of tokens) {
+          if (token) {
+            this.wordsList.push(token);
+            if (this.wordsList.length >= count) break;
+          }
+        }
       }
     }
   }
@@ -200,9 +208,14 @@ class SpeedTestGame {
       const extra = [...LAO_WORDS[this.options.difficulty]].sort(() => 0.5 - Math.random());
       const extraStrings = [];
       for (const item of extra) {
-        const norm = item.word.normalize('NFC');
-        this.wordsList.push(norm);
-        extraStrings.push(norm);
+        const norm = item.word.normalize('NFC').trim();
+        const tokens = norm.split(/\s+/);
+        for (const token of tokens) {
+          if (token) {
+            this.wordsList.push(token);
+            extraStrings.push(token);
+          }
+        }
       }
       this.appendExtraWords(extraStrings);
     }
@@ -245,6 +258,12 @@ class SpeedTestGame {
 
     if (isSpace) {
       if (this.currentInput.length === 0) return;
+      // ຫາກຄຳສັບປັດຈຸບັນຍັງບໍ່ຈົບ ແລະ ມີຍະຫວ່າງຢູ່ຂ້າງໜ້າ ໃຫ້ພິມຍະຫວ່າງເຂົ້າໄປ
+      if (currentWord.includes(' ') && currentWord.startsWith(this.currentInput + ' ')) {
+        this.currentInput += ' ';
+        this.renderWord(this.currentWordIdx);
+        return;
+      }
       this.advanceToNextWord();
       return;
     }
